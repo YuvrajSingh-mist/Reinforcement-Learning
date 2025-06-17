@@ -1,0 +1,88 @@
+2025-06-17 08:21:53,203 INFO    MainThread:873539 [wandb_setup.py:_flush():67] Current SDK version is 0.19.8
+2025-06-17 08:21:53,205 INFO    MainThread:873539 [wandb_setup.py:_flush():67] Configure stats pid to 873539
+2025-06-17 08:21:53,206 INFO    MainThread:873539 [wandb_setup.py:_flush():67] Loading settings from /home/yuvrajsingh/.config/wandb/settings
+2025-06-17 08:21:53,207 INFO    MainThread:873539 [wandb_setup.py:_flush():67] Loading settings from /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/wandb/settings
+2025-06-17 08:21:53,207 INFO    MainThread:873539 [wandb_setup.py:_flush():67] Loading settings from environment variables
+2025-06-17 08:21:53,209 INFO    MainThread:873539 [wandb_init.py:setup_run_log_directory():647] Logging user logs to /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/wandb/run-20250617_082153-ltrgzpqq/logs/debug.log
+2025-06-17 08:21:53,211 INFO    MainThread:873539 [wandb_init.py:setup_run_log_directory():648] Logging internal logs to /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/wandb/run-20250617_082153-ltrgzpqq/logs/debug-internal.log
+2025-06-17 08:21:53,212 INFO    MainThread:873539 [wandb_init.py:monkeypatch_ipython():599] configuring jupyter hooks <wandb.sdk.wandb_init._WandbInit object at 0x7f045cbba650>
+2025-06-17 08:21:53,251 INFO    MainThread:873539 [wandb_init.py:init():761] calling init triggers
+2025-06-17 08:21:53,251 INFO    MainThread:873539 [wandb_init.py:init():766] wandb.init called with sweep_config: {}
+config: {'_wandb': {'code_path': 'code/Deep Q Learning/deepqn.ipynb'}}
+2025-06-17 08:21:53,252 INFO    MainThread:873539 [wandb_init.py:init():784] starting backend
+2025-06-17 08:21:53,252 INFO    MainThread:873539 [wandb_init.py:init():788] sending inform_init request
+2025-06-17 08:21:53,295 INFO    MainThread:873539 [backend.py:_multiprocessing_setup():101] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2025-06-17 08:21:53,297 INFO    MainThread:873539 [wandb_init.py:init():798] backend started and connected
+2025-06-17 08:21:53,415 INFO    MainThread:873539 [wandb_run.py:_label_probe_notebook():1204] probe notebook
+2025-06-17 08:21:53,420 INFO    MainThread:873539 [wandb_init.py:init():891] updated telemetry
+2025-06-17 08:21:53,592 INFO    MainThread:873539 [wandb_init.py:init():915] communicating run to backend with 90.0 second timeout
+2025-06-17 08:21:55,392 INFO    MainThread:873539 [wandb_init.py:init():990] starting run threads in backend
+2025-06-17 08:21:56,067 INFO    MainThread:873539 [wandb_run.py:_console_start():2375] atexit reg
+2025-06-17 08:21:56,068 INFO    MainThread:873539 [wandb_run.py:_redirect():2227] redirect: wrap_raw
+2025-06-17 08:21:56,069 INFO    MainThread:873539 [wandb_run.py:_redirect():2292] Wrapping output streams.
+2025-06-17 08:21:56,070 INFO    MainThread:873539 [wandb_run.py:_redirect():2315] Redirects installed.
+2025-06-17 08:21:56,080 INFO    MainThread:873539 [wandb_init.py:init():1032] run started, returning control to user process
+2025-06-17 08:21:56,112 INFO    MainThread:873539 [wandb_run.py:_tensorboard_callback():1449] tensorboard callback: runs/CartPole-v1__DQN-CartPole__42__1750148511, True
+2025-06-17 08:21:57,033 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:21:57,503 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:21:57,504 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:31:54,021 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:31:54,056 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:31:54,554 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:31:54,555 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:31:55,303 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:31:55,306 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:31:55,702 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:31:55,703 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:32:01,315 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:32:01,319 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:32:01,719 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:32:01,719 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:32:02,267 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:32:02,271 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:32:02,698 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:32:02,698 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:32:06,790 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:32:06,793 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:32:06,191 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:32:06,192 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:32:07,669 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:32:07,672 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:32:08,163 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:32:08,163 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:32:25,762 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:32:25,764 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:32:26,172 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:32:26,173 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:32:27,278 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:32:27,281 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:32:27,671 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:32:27,672 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:32:29,667 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:32:29,669 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:32:30,073 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:32:30,074 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:32:32,961 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:32:32,964 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:32:33,363 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:32:33,364 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:52:44,547 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:52:45,975 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:52:46,404 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:52:46,404 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:56:00,383 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:56:01,446 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:56:01,830 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:56:01,830 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:56:04,880 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:56:04,924 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:56:05,359 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:56:05,359 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:56:05,907 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:56:05,911 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:56:06,286 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:56:06,287 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
+2025-06-17 08:56:08,054 INFO    MainThread:873539 [wandb_init.py:_resume_backend():569] resuming backend
+2025-06-17 08:56:08,057 INFO    MainThread:873539 [jupyter.py:_save_ipynb():397] looking for notebook: /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/Deep Q Learning/deepqn.ipynb
+2025-06-17 08:56:08,569 INFO    MainThread:873539 [wandb_init.py:_pause_backend():562] saved code: <Artifact source-cleanRL-_mnt_c_Users_yuvra_OneDrive_Desktop_Work_pytorch_RL_Deep_Q_Learning_deepqn.ipynb>
+2025-06-17 08:56:08,569 INFO    MainThread:873539 [wandb_init.py:_pause_backend():564] pausing backend
