@@ -98,9 +98,19 @@ Videos of the agent's performance are saved in the `videos/{run_name}/eval` dire
 
 Here's a video showing the trained agent in action:
 
-https://github.com/YuvrajSingh-mist/Reinforcement-Learning/images/final.mp4
+https://user-images.githubusercontent.com/YuvrajSingh-mist/DQN/images/final.mp4
 
-You can view more videos in the `videos` directory of this repository.
+If the above doesn't play, try this format:
+
+![CartPole Agent](images/final.mp4)
+
+Or this HTML embed (works when viewing locally):
+
+<video width="640" height="480" controls>
+  <source src="images/final.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 
 ## Logging
 
@@ -109,21 +119,12 @@ Training metrics are logged to both TensorBoard and Weights & Biases (if enabled
 - Episodic lengths
 - TD loss
 - Q-values
-- Steps per second (SPS)
+<!-- - Steps per second (SPS) -->
 - Exploration rate (epsilon)
 
 ## Results
 
 After successful training, the agent should be able to balance the pole for the maximum episode length (500 timesteps in CartPole-v1).
-
-## Troubleshooting
-
-If your training script terminates unexpectedly (e.g., after 15k steps), consider:
-
-1. **Memory Usage**: The evaluation function might accumulate too many frames. Consider limiting frame capture to only the first episode or reducing evaluation frequency.
-2. **Graphics Issues**: If using CV2 for rendering, make sure your environment supports it properly.
-3. **CUDA Issues**: If using GPU, monitor for out-of-memory errors.
-4. **Buffer Size**: Ensure your replay buffer size is appropriate for your available memory.
 
 ## References
 
