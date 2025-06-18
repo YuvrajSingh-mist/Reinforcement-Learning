@@ -98,7 +98,7 @@ Videos of the agent's performance are saved in the `videos/{run_name}/eval` dire
 
 Here's a video showing the trained agent in action:
 
-https://user-images.githubusercontent.com/YuvrajSingh-mist/DQN/images/final.mp4
+https://user-images.githubusercontent.com/YuvrajSingh-mist/tree/master/DQN/images/final.mp4
 
 If the above doesn't play, try this format:
 
