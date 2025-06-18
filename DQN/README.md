@@ -98,18 +98,15 @@ Videos of the agent's performance are saved in the `videos/{run_name}/eval` dire
 
 Here's a video showing the trained agent in action:
 
-https://user-images.githubusercontent.com/YuvrajSingh-mist/tree/master/DQN/images/final.mp4
+<details>
+  <summary>Click to see video (GIF format)</summary>
+  
+  ![CartPole Agent Performance](images/final.mp4)
+  
+</details>
 
-If the above doesn't play, try this format:
+![CartPole Demo](images/cartpole_demo.gif)
 
-![CartPole Agent](images/final.mp4)
-
-Or this HTML embed (works when viewing locally):
-
-<video width="640" height="480" controls>
-  <source src="images/final.mp4" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
 
 
 ## Logging
