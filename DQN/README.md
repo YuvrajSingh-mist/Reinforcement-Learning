@@ -86,9 +86,6 @@ The agent is evaluated periodically during training (every 1,000 timesteps by de
 - Average return over multiple episodes
 - Videos of the agent's performance
 
-## Visualization
-
-Videos of the agent's performance are saved in the `videos/{run_name}/eval` directory. The videos show the agent balancing the pole in real-time.
 
 ### Training Progress
 
@@ -101,11 +98,12 @@ Here's a video showing the trained agent in action:
 <details>
   <summary>Click to see video (GIF format)</summary>
   
-  ![CartPole Agent Performance](images/final.mp4)
+  <!-- <!-- ![CartPole Agent Performance](images/final.mp4) -->
+  
+![CartPole Demo](images/cartpole_demo.gif) -->
   
 </details>
 
-![CartPole Demo](images/cartpole_demo.gif)
 
 
 
