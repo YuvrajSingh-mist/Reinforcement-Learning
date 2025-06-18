@@ -98,7 +98,7 @@ Videos of the agent's performance are saved in the `videos/{run_name}/eval` dire
 
 Here's a video showing the trained agent in action:
 
-https://github.com/YuvrajSingh-mist/Reinforcement-Learning/assets/videos/cartpole_trained_agent.mp4
+https://github.com/YuvrajSingh-mist/Reinforcement-Learning/images/final.mp4
 
 You can view more videos in the `videos` directory of this repository.
 
