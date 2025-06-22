@@ -22,21 +22,21 @@ class Config:
     exp_name = "DQN-CartPole"
     seed = 42
     env_id = "CartPole-v1"
-    episodes = 100000  # Number of episodes to train
+    episodes = 2000  # Number of episodes to train
     # Training parameters
-    total_timesteps = 10000
-    learning_rate = 2e-4
-    buffer_size = 20000 
+    # total_timesteps = 10000
+    learning_rate = 2e-3
+    # buffer_size = 20000 
     gamma = 0.99
-    tau = 1.0
-    target_network_frequency = 50
-    batch_size = 128
-    start_e = 1.0
-    end_e = 0.05
-    exploration_fraction = 0.5
-    learning_starts = 1000
-    train_frequency = 10
-    limit_steps = 200  # Limit steps for initial testing
+    # tau = 1.0
+    # target_network_frequency = 50
+    # batch_size = 128
+    # start_e = 1.0
+    # end_e = 0.05
+    # exploration_fraction = 0.5
+    # learning_starts = 1000
+    # train_frequency = 10
+    # limit_stzeps = 200  # Limit steps for initial testing
     # Logging & saving
     capture_video = True
     save_model = True
@@ -196,6 +196,7 @@ for step in tqdm(range(args.episodes)):
         rewards.append(reward)
         done = terminated or truncated
         log_probs.append(probs)
+        obs = new_obs
         # if done:
         #     break
     # if done:
@@ -238,12 +239,14 @@ for step in tqdm(range(args.episodes)):
     # log_probs = []
     log_probs = torch.stack(log_probs)  # Stack log probabilities
   
-    
+    # print(returns.shape, log_probs.shape)
+    # print(returns, log_probs)
       # Calculate loss
     policy_loss = []
     for log_prob, R in zip(log_probs, returns):
         policy_loss.append(-log_prob * R)  # Negative for gradient ascent
     
+    # print(policy_loss)
     # Update policy
     optimizer.zero_grad()
     loss = torch.stack(policy_loss, dim=0).mean()  # Use stack instead of cat for 0-dimensional tensors
