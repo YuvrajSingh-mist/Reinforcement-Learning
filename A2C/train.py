@@ -133,7 +133,7 @@ run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
 if args.use_wandb:
         wandb.init(
             project=args.wandb_project,
-            entity=args.wandb_entity,
+            # entity=args.wandb_entity,
             sync_tensorboard=True,
             config=vars(args),
             name=run_name,
@@ -222,14 +222,13 @@ for step in tqdm(range(args.episodes)):
     log_probs = torch.stack(log_probs)  # Stack log probabilities
   
  
-      # Calculate loss
+    # Calculate loss
     policy_loss = []
-    for log_prob, R in zip(log_probs, returns):
-        policy_loss.append(-log_prob * R)  # Negative for gradient ascent
-    
-   
+    for log_prob, advantage in zip(log_probs, advantages):
+        policy_loss.append(-log_prob * advantage)  # Negative for gradient ascent
+
     #Actor loss is the negative log probability of the action taken, weighted by the advantage
-    policy_loss = torch.stack(policy_loss, dim=0) * advantages  # Stack to create a tensor
+    policy_loss = torch.stack(policy_loss, dim=0)
     policy_loss = policy_loss.mean()  # Mean over the batch
     actor_loss = policy_loss
     actor_optim.zero_grad()
