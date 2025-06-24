@@ -67,9 +67,9 @@ class Config:
     exp_name = "DQN-CartPole"  # Can be renamed to "REINFORCE-CartPole"
     seed = 42
     env_id = "CartPole-v1"
-    episodes = 100000
+    episodes = 2000  # Number of episodes to train
     # Training parameters
-    learning_rate = 2e-4
+    learning_rate = 2e-3
     gamma = 0.99  # Discount factor
     # Logging & saving
     capture_video = True
