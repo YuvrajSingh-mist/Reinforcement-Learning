@@ -161,7 +161,7 @@ actor_optim = optim.Adam(actor_network.parameters(), lr=args.learning_rate)
 critic_optim = optim.Adam(critic_network.parameters(), lr=args.learning_rate)
 
 actor_network.train()
-
+critic_network.train()
 
 start_time = time.time()
 
