@@ -4,6 +4,14 @@
 
 This repository contains an implementation of the Advantage Actor-Critic (A2C) algorithm, a policy gradient method that combines the benefits of both policy-based and value-based reinforcement learning. The implementation is built with PyTorch and supports training on various Gymnasium environments, with a focus on the CartPole-v1 environment.
 
+## Results
+
+### Frozen Lake Environment
+![Frozen Lake Learning Curve](images/frozenlakeLoss.jpg)
+
+### Lunar Lander Environment
+![Lunar Lander Learning Curve](images/lunarlanderLoss.jpg)
+
 ## Algorithm Description
 
 A2C is a synchronous, deterministic variant of the Asynchronous Advantage Actor-Critic (A3C) algorithm. It uses two neural networks:
