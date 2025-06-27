@@ -1,3 +1,5 @@
+
+
 import os
 import random
 import time
@@ -18,12 +20,13 @@ import imageio
 # ===== CONFIGURATION =====
 class Config:
     # Experiment settings
-    exp_name = "A2C-CartPole"
+    exp_name = "A2C-FrozenLake"
     seed = 42
-    env_id = "CartPole-v1"
-    episodes = 2000 
+    env_id = "FrozenLake-v1"
+    episodes = 2000000 
    
-    learning_rate = 2e-3
+    learning_rate = 2e-4
+    # final_lr = 2e-5
 
     gamma = 0.99
   
@@ -34,8 +37,9 @@ class Config:
     # WandB settings
     use_wandb = True
     wandb_project = "cleanRL"
-
-
+    # decay_iters = 15000
+    # entropy_coef = 0.001
+    
 class ActorNet(nn.Module):
     def __init__(self, state_space, action_space):
         super(ActorNet, self).__init__()
@@ -46,9 +50,14 @@ class ActorNet(nn.Module):
         self.out = nn.Linear(16, action_space)
 
     def forward(self, x):
-        x =  self.out(self.fc3(torch.relu(self.fc2(torch.relu(self.fc1(x))))))
+        # print(x.shape)
+        x = torch.nn.functional.mish(self.fc1(x))  # Use Mish activation
+        x = torch.nn.functional.mish(self.fc2(x))
+        x = torch.nn.functional.mish(self.fc3(x))
+        x = self.out(x)
+        
       
-        x = torch.nn.functional.softmax(x, dim=1)  # Apply softmax to get probabilities
+        x = torch.nn.functional.softmax(x, dim=-1)  # Apply softmax to get probabilities
         
 
         return x
@@ -57,7 +66,8 @@ class ActorNet(nn.Module):
         action_probs = self.forward(x)
         dist = torch.distributions.Categorical(action_probs)  
         action = dist.sample() 
-        return action, dist.log_prob(action) 
+        entropy = dist.entropy()
+        return action, dist.log_prob(action), entropy 
     
 
 class CriticNet(nn.Module):
@@ -70,7 +80,9 @@ class CriticNet(nn.Module):
         self.q_value = nn.Linear(16, action_space)
         
     def forward(self, x):
-        return self.q_value(torch.relu(self.fc2(torch.relu(self.fc1(x)))))
+        x = torch.nn.functional.mish(self.fc1(x))
+        x = torch.nn.functional.mish(self.fc2(x))
+        return self.q_value(x)
     
     
     
@@ -85,6 +97,11 @@ def make_env(env_id, seed, capture_video, run_name, eval_mode=False, render_mode
     return env
 
 
+def one_hot_encode(obs, n_states=16):
+    """Convert integer observation to one-hot encoded vector"""
+    encoded = np.zeros(n_states, dtype=np.float32)
+    encoded[obs] = 1.0
+    return encoded
 def evaluate(model, device, run_name, num_eval_eps = 10, record = False, render_mode=None):
     
     eval_env = make_env(env_id=Config.env_id, seed=Config.seed, capture_video=True, render_mode=render_mode, run_name=run_name, eval_mode=True)
@@ -111,8 +128,8 @@ def evaluate(model, device, run_name, num_eval_eps = 10, record = False, render_
                 frames.append(frame)  # Capture all frames
 
             with torch.no_grad():
-          
-                action, log_probs = model.get_action(torch.tensor(obs, device=device).unsqueeze(0))
+                obs = one_hot_encode(obs, n_states=eval_env.observation_space.n)
+                action, log_probs, entropy = model.get_action(torch.tensor(obs, dtype=torch.float32, device=device).unsqueeze(0))
                 obs, reward, terminated, truncated, _ = eval_env.step(action.item())
                 done = terminated or truncated
                 episode_reward += reward
@@ -126,7 +143,9 @@ def evaluate(model, device, run_name, num_eval_eps = 10, record = False, render_
     model.train()
     return returns, frames
 
+
 args = Config()
+
 run_name = f"{args.env_id}__{args.exp_name}__{args.seed}__{int(time.time())}"
 
  # Initialize WandB
@@ -154,8 +173,10 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 env = make_env(args.env_id, args.seed, args.capture_video, run_name)
-actor_network = ActorNet(env.observation_space.shape[0], env.action_space.n).to(device)
-critic_network = CriticNet(env.observation_space.shape[0], 1).to(device)
+print(env.observation_space)
+print(env.action_space)
+actor_network = ActorNet(env.observation_space.n, env.action_space.n).to(device)
+critic_network = CriticNet(env.observation_space.n, 1).to(device)
 
 actor_optim = optim.Adam(actor_network.parameters(), lr=args.learning_rate)
 critic_optim = optim.Adam(critic_network.parameters(), lr=args.learning_rate)
@@ -167,17 +188,43 @@ start_time = time.time()
 
 
 
-for step in tqdm(range(args.num_steps)):
+
+
+for step in tqdm(range(args.episodes)):
     obs,  _ = env.reset()
     rewards = []
     done = False
     rt = 0.0
-    
+    entropyls = []
     log_probs = []
     values = []
-    while not done:
+    
+    # #    --- Learning Rate Annealing ---
+    # if step < args.decay_iters:
+    #     # Calculate the fraction of decay completed
+    #     fraction = step / args.decay_iters
+        
+    #     # Linearly interpolate Actor LR
+    #     current_actor_lr = args.learning_rate - fraction * (args.learning_rate - args.final_lr)
+    #     for param_group in actor_optim.param_groups:
+    #         param_group['lr'] = current_actor_lr
+        
+    #     for param_group in critic_optim.param_groups:
+            
+    #         param_group['lr'] = current_actor_lr
 
-        action, probs = actor_network.get_action(torch.tensor(obs, device=device).unsqueeze(0))
+       
+    # else:
+    #     # After decay period, keep LR at final_learning_rate
+    #     for param_group in actor_optim.param_groups:
+    #         param_group['lr'] = args.final_lr
+    #     for param_group in critic_optim.param_groups:
+    #         param_group['lr'] = args.final_lr
+            
+            
+    while not done:
+        obs = one_hot_encode(obs, n_states=env.observation_space.n)
+        action, probs, entropy = actor_network.get_action(torch.tensor(obs, device=device, dtype=torch.float32).unsqueeze(0))
         action = action.item()
         new_obs, reward, terminated, truncated, info = env.step(action)
         rewards.append(reward)
@@ -186,6 +233,7 @@ for step in tqdm(range(args.num_steps)):
         done = terminated or truncated
         log_probs.append(probs)
         obs = new_obs
+        entropyls.append(entropy)
      
     returns = []
  
@@ -199,8 +247,8 @@ for step in tqdm(range(args.num_steps)):
     returns = torch.tensor(returns, device=device, dtype=torch.float32)
     values = torch.stack(values)
     
-    advantages = returns - values.squeeze()  # Calculate advantages
-   
+    advantages = (returns - values.squeeze()).detach()  # Calculate advantages
+    advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)  # Normalize advantages
     # Log episode returns
     if "episode" in info:
         print(f"Step={step}, Return={info['episode']['r']}")
@@ -232,9 +280,10 @@ for step in tqdm(range(args.num_steps)):
     policy_loss = policy_loss.mean()  # Mean over the batch
     actor_loss = policy_loss
     actor_optim.zero_grad()
-    
+     
    
-    actor_loss.backward(retain_graph=True)
+    actor_loss.backward()
+    # torch.nn.utils.clip_grad_norm_(actor_network.parameters(), max_norm=1.0)
     actor_optim.step()
     
     #VALUE LOSS
@@ -243,6 +292,7 @@ for step in tqdm(range(args.num_steps)):
 
     critic_optim.zero_grad()
     critic_loss.backward()
+    # torch.nn.utils.clip_grad_norm_(critic_network.parameters(), max_norm=1.0)
     critic_optim.step()
     
     
@@ -301,11 +351,19 @@ for step in tqdm(range(args.num_steps)):
 
 # Save final video to WandB
 if args.use_wandb:
-    train_video_path = f"videos/final.mp4"
-    returns, frames = evaluate(actor_network, device, run_name, record=True, num_eval_eps=5, render_mode='rgb_array')
-  
-    imageio.mimsave(train_video_path, frames, fps=30)
-    print(f"Final training video saved to {train_video_path}")
+    try:
+        train_video_path = f"videos/final.mp4"
+        returns, frames = evaluate(actor_network, device, run_name, record=True, num_eval_eps=5, render_mode='rgb_array')
+        
+        if frames and len(frames) > 0:
+            # Use a more compatible codec
+            imageio.mimsave(train_video_path, frames, fps=30, codec='libx264')
+            print(f"Final training video saved to {train_video_path}")
+        else:
+            print("No frames captured for video")
+    except Exception as e:
+        print(f"Error saving video: {e}")
+    
     wandb.finish()
 if args.capture_video:
     cv2.destroyAllWindows()
