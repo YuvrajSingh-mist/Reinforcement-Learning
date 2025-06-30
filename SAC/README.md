@@ -77,3 +77,9 @@ The following image shows the training performance on the Pendulum environment:
 
 ![Pendulum Training Results](images/pendulum.png)
 
+### HalfCheetah
+
+Although not explicitly implemented in the current codebase, we have training results for the HalfCheetah environment using SAC:
+
+![HalfCheetah Training Results](images/halfcheetah.png)
+
