@@ -232,7 +232,7 @@ for step in tqdm(range(args.episodes)):
     policy_loss = policy_loss.mean()  # Mean over the batch
     actor_loss = policy_loss
     actor_optim.zero_grad()
-    
+     
    
     actor_loss.backward(retain_graph=True)
     actor_optim.step()
@@ -241,7 +241,7 @@ for step in tqdm(range(args.episodes)):
     # Critic loss is the mean squared error between the predicted values and the returns
     critic_loss = torch.nn.functional.mse_loss(values.squeeze(), returns)
 
-    critic_network.zero_grad()
+    critic_optim.zero_grad()
     critic_loss.backward()
     critic_optim.step()
     
