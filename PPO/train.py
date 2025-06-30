@@ -18,27 +18,29 @@ torch.autograd.set_detect_anomaly(True)
 # ===== CONFIGURATION =====
 class Config:
     # Experiment settings
-    exp_name = "PPO-CartPole"
+    exp_name = "PPO-LunarLander-v2"
     seed = 42
-    env_id = "CartPole-v1"
-    episodes = 100000
+    env_id = "LunarLander-v3"
+    episodes = 10000
    
-    actor_learning_rate = 2e-4
-    critic_lr = 1e-3
-    
+    # actor_learning_rate = 3e-4
+    # critic_lr = 1e-3
+    lr = 3e-4
     gamma = 0.99
   
     capture_video = True
-    save_model = True
-    upload_model = True
-    clip_norm = 1.0
+    # save_model = True
+    # upload_model = True
+    # clip_norm = 1.0
     clip_value = 0.2
     PPO_EPOCHS = 4
     ENTROPY_COEFF = 0.01
     # WandB settings
     use_wandb = True
     wandb_project = "cleanRL"
-    max_steps = 500
+    max_steps = 512
+    # final_lr = 5e-5
+    # decay_iters = 0.9 * episodes
     
 VALUE_COEFF = 0.5
 
@@ -46,17 +48,30 @@ class ActorNet(nn.Module):
     def __init__(self, state_space, action_space):
         super(ActorNet, self).__init__()
         print(f"State space: {state_space}, Action space: {action_space}")
-        self.fc1 = nn.Linear(state_space, 32)
-        self.fc2 = nn.Linear(32, 32)
-        self.fc3 = nn.Linear(32, 16)
-        self.out = nn.Linear(16, action_space)
+        self.fc1 = nn.Linear(state_space, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 256)
+        self.out = nn.Linear(256, action_space)
 
     def forward(self, x):
-        x =  self.out(self.fc3(torch.relu(self.fc2(torch.relu(self.fc1(x))))))
-        # print(x.shape)
+        # Use sequential processing for better numerical stability
+        x = self.fc1(x)
+            
+        x = torch.nn.functional.relu(x)  # Use Mish activation
+        
+        x = self.fc2(x)
+      
+        x = torch.nn.functional.relu(x)  # Use Mish activation
+        
+        x = self.fc3(x)
+        
+        x = torch.nn.functional.relu(x)  # Use Mish activation 889438865
+        
+        x = self.out(x)  # Output layer
+       
+        # Apply softmax with numerical stability
         x = torch.nn.functional.softmax(x, dim=-1)  # Apply softmax to get probabilities
         
-
         return x
     
     def get_action(self, x):
@@ -77,12 +92,16 @@ class CriticNet(nn.Module):
     def __init__(self, state_space, action_space):
         super(CriticNet, self).__init__()
         print(f"State space: {state_space}, Action space: {action_space}")
-        self.fc1 = nn.Linear(state_space, 32)
-        self.fc2 = nn.Linear(32, 16)
-        self.q_value = nn.Linear(16, action_space)
+        self.fc1 = nn.Linear(state_space, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 256)
+        self.value = nn.Linear(256, 1)
         
     def forward(self, x):
-        return self.q_value(torch.relu(self.fc2(torch.relu(self.fc1(x)))))
+        x = torch.nn.functional.relu(self.fc1(x))
+        x = torch.nn.functional.relu(self.fc2(x))
+        x = torch.nn.functional.relu(self.fc3(x))
+        return self.value(x)
     
     
     
@@ -169,18 +188,20 @@ env = make_env(args.env_id, args.seed, args.capture_video, run_name)
 actor_network = ActorNet(env.observation_space.shape[0], env.action_space.n).to(device)
 critic_network = CriticNet(env.observation_space.shape[0], 1).to(device)
 
-actor_optim = optim.Adam(actor_network.parameters(), lr=args.actor_learning_rate)
-critic_optim = optim.Adam(critic_network.parameters(), lr=args.critic_lr)
+actor_optim = optim.Adam(actor_network.parameters(), lr=args.lr)
+critic_optim = optim.Adam(critic_network.parameters(), lr=args.lr)
 
 actor_network.train()
 critic_network.train()
 
 start_time = time.time()
 
-
+obs, _ = env.reset()
 
 for step in tqdm(range(args.episodes)):
-    obs,  _ = env.reset()
+    
+
+    # obs,  _ = env.reset()
     rewards = []
     done = False
     rt = 0.0
@@ -189,8 +210,11 @@ for step in tqdm(range(args.episodes)):
     values = []
     states = []
     actions = []
+    dones = []
     # states.append(obs)
     for _ in range(args.max_steps):
+   
+  
         states.append(obs)
         action, probs = actor_network.get_action(torch.tensor(obs, device=device).unsqueeze(0))
         action = action.item()
@@ -199,23 +223,37 @@ for step in tqdm(range(args.episodes)):
         value = critic_network(torch.tensor(obs, device=device).unsqueeze(0))
         values.append(value)
         done = terminated or truncated
+        dones.append(done)
         old_log_probs.append(probs)
         obs = new_obs
         actions.append(action)
         if done:
             obs, _ = env.reset()
-            
+        #     dones.append(True)
+        # else:
+        #     dones.append(False)
         # states.append(obs)
         
     returns = []
- 
-    rt = 0.0
-    for reward in reversed(rewards):
-        
-        rt = reward +  rt * args.gamma
+    curr_observation = obs # The state after the last step
     
+    # Use this logic after the fixed-size rollout
+    returns = []
+    if dones[-1]: # If the rollout ended on a terminal state
+        bootstrap_scalar = 0.0
+    else:
+        with torch.no_grad():
+            bootstrap_scalar = critic_network(torch.tensor(curr_observation, device=device).unsqueeze(0)).squeeze().item()
+
+    gt_next_state = bootstrap_scalar
+    for reward_at_t, done_at_t in zip(reversed(rewards), reversed(dones)):
+        if done_at_t:
+            gt_next_state = 0.0
+        rt = reward_at_t + args.gamma * gt_next_state
         returns.insert(0, rt)
-    
+        gt_next_state = rt
+
+
     returns = torch.tensor(returns, device=device, dtype=torch.float32)
     values = torch.stack(values).squeeze()
     
@@ -223,25 +261,12 @@ for step in tqdm(range(args.episodes)):
     advantages = (returns - values).detach()  # Calculate advantages and detach
     advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)  # Normalize advantages
     returns = returns.detach()  # Detach returns
-    # Log episode returns
-    if "episode" in info:
-        print(f"Step={step}, Return={info['episode']['r']}")
-    
-       
-        # WandB logging
-        if args.use_wandb:
-            wandb.log({
-                "episodic_return": info['episode']['r'],
-                "episodic_length": info['episode']['l'],
-                # "epsilon": eps_decay(step, args.exploration_fraction),
-                "global_step": step,
-                "calculated_return": returns.mean().item()
-            })
+
     
     entropyls = []
     
     #Calculating the loss
-    old_log_probs = torch.stack(old_log_probs).detach()  # Stack and detach log probabilities
+    old_log_probs = torch.stack(old_log_probs).squeeze().detach()  # Stack and detach log probabilities
     states_tensor = torch.tensor(np.array(states), device=device, dtype=torch.float32).detach()
     actions_tensor = torch.tensor(actions, device=device, dtype=torch.long).detach()
     
@@ -251,7 +276,7 @@ for step in tqdm(range(args.episodes)):
     for epoch in range(args.PPO_EPOCHS):
         # Get new action probabilities for all states at once
         new_log_probs, entropy = actor_network.get_action_and_log_probs(states_tensor, actions_tensor)
-        entropy_mean = entropy.mean()  # Keep as tensor for backpropagation
+        # entropy_mean = entropy.mean()  # Keep as tensor for backpropagation
         ratio = torch.exp(new_log_probs - old_log_probs)  # Calculate the ratio of new to old probabilities
         
         # Calculate surrogate loss
@@ -259,72 +284,20 @@ for step in tqdm(range(args.episodes)):
         surrogate_loss = -(torch.min(
             ratio * advantages,  # For the current policy
             torch.clamp(ratio, 1 - args.clip_value, 1 + args.clip_value) * advantages  # Clipped version
-        ).mean() + args.ENTROPY_COEFF * entropy_mean)  # Subtract entropy to encourage exploration
+        ).mean())  # Subtract entropy to encourage exploration
         
         # VALUE LOSS - Get fresh values for current policy
-        current_values = critic_network(states_tensor).squeeze()
+        current_values = critic_network(states_tensor).squeeze()  # Get current values for all states at once
+        # print(f"Current values shape: {current_values.shape}, Returns shape: {returns.shape}")
         critic_loss = VALUE_COEFF * torch.nn.functional.mse_loss(current_values, returns)
         
-       
+        loss = surrogate_loss + critic_loss
             
-        
-        # Update actor
         actor_optim.zero_grad()
-        surrogate_loss.backward()
-          # Log gradient norms for monitoring
-        # if args.use_wandb and step % 200 == 0:
-        grad_norm_dict = {}
-        total_norm = 0
-        # for name, param in actor_network.named_parameters():
-        #     if param.grad is not None:
-        #         param_norm = param.grad.data.norm(2)
-        #         grad_norm_dict[f"gradients/norm_{name}"] = param_norm.item()
-        #         total_norm += param_norm.item() ** 2
-        # grad_norm_dict["gradients/total_norm"] = total_norm ** 0.5
-        # wandb.log(grad_norm_dict)
-        
-        torch.nn.utils.clip_grad_norm_(actor_network.parameters(), args.clip_norm)
-        actor_optim.step()
-        
-        # Update critic
         critic_optim.zero_grad()
-        critic_loss.backward()
-        grad_norm_dict = {}
-        total_norm = 0
-        # for name, param in critic_network.named_parameters():
-        #     if param.grad is not None:
-        #         param_norm = param.grad.data.norm(2)
-        #         grad_norm_dict[f"gradients/critic_norm_{name}"] = param_norm.item()
-        #         total_norm += param_norm.item() ** 2
-        # grad_norm_dict["gradients/total_critic_norm"] = total_norm ** 0.5
-        # wandb.log(grad_norm_dict)
-        
-        torch.nn.utils.clip_grad_norm_(critic_network.parameters(), args.clip_norm)
+        loss.backward()
+        actor_optim.step()
         critic_optim.step()
-    
-    
-    # # Log gradient norms for monitoring
-    # if args.use_wandb and step % 200 == 0:
-    #     grad_norm_dict = {}
-    #     total_norm = 0
-    #     for name, param in actor_network.named_parameters():
-    #         if param.grad is not None:
-    #             param_norm = param.grad.data.norm(2)
-    #             grad_norm_dict[f"gradients/norm_{name}"] = param_norm.item()
-    #             total_norm += param_norm.item() ** 2
-    #     grad_norm_dict["gradients/total_norm"] = total_norm ** 0.5
-    #     wandb.log(grad_norm_dict)
-        
-    #     grad_norm_dict = {}
-    #     total_norm = 0
-    #     for name, param in critic_network.named_parameters():
-    #         if param.grad is not None:
-    #             param_norm = param.grad.data.norm(2)
-    #             grad_norm_dict[f"gradients/critic_norm_{name}"] = param_norm.item()
-    #             total_norm += param_norm.item() ** 2
-    #     grad_norm_dict["gradients/total_critic_norm"] = total_norm ** 0.5
-    #     wandb.log(grad_norm_dict)
-        
 
     
 
@@ -350,7 +323,7 @@ for step in tqdm(range(args.episodes)):
     
     
     #         # ===== MODEL EVALUATION & SAVING =====
-    if args.save_model and step % 200 == 0:
+    if step % 100 == 0:
 
         # Evaluate model
         episodic_returns, eval_frames = evaluate(actor_network, device, run_name)
@@ -369,13 +342,12 @@ for step in tqdm(range(args.episodes)):
 
 # Save final video to WandB
 if args.use_wandb:
-    train_video_path = f"videos/final.mp4"
+    train_video_path = f"videos/final_{args.env_id}.mp4"
     returns, frames = evaluate(actor_network, device, run_name, record=True, num_eval_eps=5, render_mode='rgb_array')
   
-    imageio.mimsave(train_video_path, frames, fps=30)
+    imageio.mimsave(train_video_path, frames, fps=30, codec='')
     print(f"Final training video saved to {train_video_path}")
     wandb.finish()
 if args.capture_video:
     cv2.destroyAllWindows()
-
 
