@@ -87,7 +87,7 @@ The following image shows the training performance on the LunarLander environmen
 
 ![LunarLander Training Results](images/lunar.png)
 
-### Pendulum
+### Cartpole
 
 The following image shows the training performance on the Pendulum environment:
 
