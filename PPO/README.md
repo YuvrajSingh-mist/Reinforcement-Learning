@@ -105,6 +105,17 @@ Agent gameplay demonstration:
 
 ![ViZDoom Basic Gameplay](images/vizdoom-basic.gif)
 
+### ViZDoom Defend the Center
+
+PPO has been successfully applied to the ViZDoom Defend the Center environment, a challenging 3D first-person shooter task where the agent must defend against enemies approaching from all directions. 
+
+Agent gameplay demonstration:
+
+![ViZDoom Defend the Center Gameplay](images/defend-the-center.gif)
+
+Detailed training results and analysis can be found in this comprehensive report:
+[**VizDoom Defend The Center PPO - WandB Report**](https://wandb.ai/rentio/cleanRL-Atari/reports/VizDoom-Defend-The-Center-PPO---VmlldzoxMzQ3MTY5NQ?accessToken=2yj2rba31fe3bd05niesrduhj0i8u7n7on0oz449nmew58bhf7h5acmc2qbdu5gf)
+
 ### Car Racing
 
 The following image shows the training performance on the CarRacing-v3 environment:
