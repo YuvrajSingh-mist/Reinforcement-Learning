@@ -90,9 +90,9 @@ The following image shows the training performance on the LunarLander environmen
 
 ### Cartpole
 
-The following image shows the training performance on the Pendulum environment:
+The following image shows the training performance on the CartPole environment:
 
-![Pendulum Training Results](images/pendulum.png)
+![Pendulum Training Results](images/cart.png)
 
 ### ViZDoom Basic
 
