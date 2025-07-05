@@ -25,6 +25,7 @@ This repository includes two main PPO implementations:
 This implementation has been tested on:
 - **CartPole-v1**: A classic control task where a pole is attached to a cart that moves along a frictionless track.
 - **LunarLander-v3**: A more complex environment where an agent must land a lunar module on a landing pad.
+- **ViZDoom Basic**: A 3D first-person shooter environment where the agent learns to navigate and collect health packs.
 
 
 
@@ -92,6 +93,16 @@ The following image shows the training performance on the LunarLander environmen
 The following image shows the training performance on the Pendulum environment:
 
 ![Pendulum Training Results](images/pendulum.png)
+
+### ViZDoom Basic
+
+The following image shows the training performance on the ViZDoom Basic environment:
+
+![ViZDoom Basic Training Results](images/doom-basic.png)
+
+Agent gameplay demonstration:
+
+![ViZDoom Basic Gameplay](images/vizdoom-basic.gif)
 
 ## Dependencies
 
