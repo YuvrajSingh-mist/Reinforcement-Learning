@@ -25,6 +25,7 @@ This repository includes two main PPO implementations:
 This implementation has been tested on:
 - **CartPole-v1**: A classic control task where a pole is attached to a cart that moves along a frictionless track.
 - **LunarLander-v3**: A more complex environment where an agent must land a lunar module on a landing pad.
+- **CarRacing-v3**: A continuous control environment where the agent learns to drive a car around a track from a top-down view.
 - **ViZDoom Basic**: A 3D first-person shooter environment where the agent learns to navigate and collect health packs.
 
 
@@ -103,6 +104,23 @@ The following image shows the training performance on the ViZDoom Basic environm
 Agent gameplay demonstration:
 
 ![ViZDoom Basic Gameplay](images/vizdoom-basic.gif)
+
+### Car Racing
+
+The following image shows the training performance on the CarRacing-v3 environment:
+
+![Car Racing Training Results](images/car-racing.png)
+
+![Car Racing Output](images/car-racing.gif)
+PPO has been successfully applied to the CarRacing-v3 environment, a challenging continuous control task where the agent must learn to drive a car around a randomly generated track. The environment features:
+- **Continuous action space**: Steering, acceleration, and braking
+- **High-dimensional visual input**: 96x96 RGB images from a top-down view
+- **Complex dynamics**: Realistic car physics and track generation
+
+Detailed training results and analysis can be found in this comprehensive report:
+[**PPO on Car Racing v3 - WandB Report**](https://wandb.ai/rentio/cleanRL/reports/PPO-on-Car-Racing-v3--VmlldzoxMzQ3MTE4MQ?accessToken=alohq5rg73rh5jzaznz68gsi1ylbuc2c3f7octr217iff29lewvau8wed6129231)
+
+
 
 ## Dependencies
 
