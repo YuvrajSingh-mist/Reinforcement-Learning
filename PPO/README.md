@@ -111,7 +111,7 @@ PPO has been successfully applied to the ViZDoom Defend the Center environment, 
 
 Agent gameplay demonstration:
 
-![ViZDoom Defend the Center Gameplay](images/defend-the-center.gif)
+![ViZDoom Defend the Center Gameplay](images/defend_the_center.gif)
 
 Detailed training results and analysis can be found in this comprehensive report:
 [**VizDoom Defend The Center PPO - WandB Report**](https://wandb.ai/rentio/cleanRL-Atari/reports/VizDoom-Defend-The-Center-PPO---VmlldzoxMzQ3MTY5NQ?accessToken=2yj2rba31fe3bd05niesrduhj0i8u7n7on0oz449nmew58bhf7h5acmc2qbdu5gf)
