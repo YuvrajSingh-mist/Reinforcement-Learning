@@ -16,23 +16,24 @@ import imageio
 # ===== CONFIGURATION =====
 class Config:
     # Experiment settings
-    exp_name = "RND-Vectorized"
+    exp_name = "PPO-RND-Vectorized-Frozen"
     seed = 42
-    env_id = "CartPole-v1"
+    env_id = "FrozenLake-v1"
     total_timesteps = 1_000_000
 
     # PPO & Agent settings
     lr = 3e-4
-    gamma = 0.99
-    num_envs = 8
+    ext_gamma = 0.99
+    int_gamme = 0.999
+    num_envs = 8    
     max_steps = 128
     num_minibatches = 4
     PPO_EPOCHS = 4
     clip_value = 0.2
     ENTROPY_COEFF = 0.01
     VALUE_COEFF = 0.5
-    EXT_COEFF = 2.0  # Weight for extrinsic advantage
-    INT_COEFF = 1.0  # Weight for intrinsic advantage
+    EXT_COEFF = 1.0  # Weight for extrinsic advantage
+    INT_COEFF = 2.0  # Weight for intrinsic advantage
     
     # Logging & Saving
     capture_video = True
@@ -47,6 +48,16 @@ class Config:
     @property
     def minibatch_size(self):
         return self.batch_size // self.num_minibatches
+
+import matplotlib.pyplot as plt
+
+def safe_display(obs):
+    plt.imshow(obs)
+    plt.axis('off')
+    plt.draw()
+    plt.pause(0.001)
+    plt.clf()
+
 
 # --- Networks ---
 def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
@@ -71,7 +82,8 @@ class ActorNet(nn.Module):
     
     def get_action(self, x, action=None):
         logits = self.forward(x)
-        dist = torch.distributions.Categorical(logits=logits)
+        probs = torch.nn.functional.softmax(logits, dim=-1)
+        dist = torch.distributions.Categorical(probs)
         if action is None:
             action = dist.sample()
         log_prob = dist.log_prob(action)
@@ -125,11 +137,22 @@ def make_env(env_id, seed, idx, render_mode=None):
     def thunk():
         env = gym.make(env_id, render_mode=render_mode)
         env = gym.wrappers.RecordEpisodeStatistics(env)
+        # env = gym.wrappers.NormalizeObservation(env)
         env.action_space.seed(seed + idx)
         return env
     return thunk
 
-def evaluate(model, device, run_name, num_eval_eps=10, record=False, render_mode=None):
+def ohe(obs, obs_space=16):
+    """
+    One-hot encodes the observation for environments with discrete action spaces.
+    """
+    zeros = torch.zeros(obs_space, dtype=torch.float32, device=device)
+    if isinstance(obs, int):
+        zeros[obs] = 1.0
+    
+    return zeros
+
+def evaluate(model, device, run_name, num_eval_eps=10, record=False, render_mode=None, display=False):
     eval_env = make_env(env_id=Config.env_id, seed=Config.seed, idx=0, render_mode=render_mode)()
     model.eval()
     returns = []
@@ -142,7 +165,10 @@ def evaluate(model, device, run_name, num_eval_eps=10, record=False, render_mode
         while not done:
             if record:
                 frames.append(eval_env.render())
+            if display:
+                safe_display(obs)
             with torch.no_grad():
+                obs = ohe(obs)
                 action, _, _ = model.get_action(torch.tensor(obs, device=device, dtype=torch.float32).unsqueeze(0))
                 obs, rewards_curr, terminated, truncated, info = eval_env.step(action.cpu().numpy().item())
                 done = terminated or truncated
@@ -167,17 +193,18 @@ if __name__ == "__main__":
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
     device = "cuda" 
-
+    # env = gym.make(args.env_id, render_mode=None)
+    # print("Obs: ", env.observation_space)
     envs = gym.vector.SyncVectorEnv(
         [make_env(args.env_id, args.seed, i) for i in range(args.num_envs)]
     )
-    obs_space_shape = envs.single_observation_space.shape
+    obs_space_shape = envs.single_observation_space.n
     action_space_n = envs.single_action_space.n
-
-    actor_network = ActorNet(obs_space_shape[0], action_space_n).to(device)
-    critic_network = CriticNet(obs_space_shape[0]).to(device)
-    predictor_network = PredictorNet(obs_space_shape[0]).to(device)
-    target_network = TargetNet(obs_space_shape[0]).to(device)
+    print(f"Observation Space: {obs_space_shape}, Action Space: {action_space_n}")
+    actor_network = ActorNet(obs_space_shape, action_space_n).to(device)
+    critic_network = CriticNet(obs_space_shape).to(device)
+    predictor_network = PredictorNet(obs_space_shape).to(device)
+    target_network = TargetNet(obs_space_shape).to(device)
     
     optimizer = optim.Adam(
         list(actor_network.parameters()) + list(critic_network.parameters()) + list(predictor_network.parameters()), 
@@ -188,7 +215,7 @@ if __name__ == "__main__":
         param.requires_grad = False
 
     # Tensor Storage
-    obs_storage = torch.zeros((args.max_steps, args.num_envs) + obs_space_shape).to(device)
+    obs_storage = torch.zeros((args.max_steps, args.num_envs) + (obs_space_shape,)).to(device)
     actions_storage = torch.zeros((args.max_steps, args.num_envs)).to(device)
     logprobs_storage = torch.zeros((args.max_steps, args.num_envs)).to(device)
     rewards_storage = torch.zeros((args.max_steps, args.num_envs)).to(device)
@@ -207,6 +234,9 @@ if __name__ == "__main__":
     for update in tqdm(range(1, num_updates + 1), desc="Training Updates"):
         # Rollout Phase
         for step in range(0, args.max_steps):
+            # print(next_obs.shape)
+            next_obs = torch.stack([ohe(obs.item()) for obs in next_obs])
+            # print(next_obs.shape)
             global_step = (update - 1) * args.batch_size + step * args.num_envs
             obs_storage[step] = next_obs
             dones_storage[step] = next_done
@@ -226,10 +256,10 @@ if __name__ == "__main__":
             with torch.no_grad():
                 pred_features = predictor_network(next_obs)
                 target_features = target_network(next_obs)
-                intrinsic_reward = F.mse_loss(pred_features, target_features).item()
-            
-            intrinsic_rewards_storage[step] = intrinsic_reward
+                intrinsic_reward = torch.pow(pred_features - target_features, 2).sum()
 
+            intrinsic_rewards_storage[step] = intrinsic_reward
+            
             # Step the environment
             new_obs, reward, terminated, truncated, info = envs.step(action.cpu().numpy())
             done = np.logical_or(terminated, truncated)
@@ -237,47 +267,55 @@ if __name__ == "__main__":
             rewards_storage[step] = torch.tensor(reward).to(device).view(-1)
             next_obs = torch.Tensor(new_obs).to(device)
             next_done = torch.Tensor(done).to(device)
-
+            wandb.log({
+                "train/step": global_step,
+                "train/intrinsic_reward": intrinsic_reward.mean().item(),
+                "train/extrinsic_reward": rewards_storage[step].mean().item(),
+                "train/total_reward": intrinsic_reward.mean().item() + rewards_storage[step].mean().item(),
+            })
             if "final_info" in info:
                 for item in info["final_info"]:
                     if item and "episode" in item:
                         writer.add_scalar("charts/episodic_return", item['episode']['r'][0], global_step)
                         writer.add_scalar("charts/episodic_length", item['episode']['l'][0], global_step)
 
-       
-            with torch.no_grad():
-                # Get the bootstrapped value from the state after the last step
-                bootstrap_ext_value, bootstrap_int_value = critic_network(next_obs)
-                
-                # Initialize tensors for returns
-                ext_returns = torch.zeros_like(rewards_storage).to(device)
-                int_returns = torch.zeros_like(intrinsic_rewards_storage).to(device)
-                
-                # Set the initial "next state" return. If an env was done, this is 0, otherwise it's the bootstrap value.
-                # (1.0 - next_done) is a trick to multiply by 0 if done, and 1 if not done.
-                ext_gt_next_state = bootstrap_ext_value.squeeze() * (1.0 - next_done)
-                int_gt_next_state = bootstrap_int_value.squeeze() * (1.0 - next_done)
+        # Calculate returns after the rollout is complete
+        with torch.no_grad():
+            # Get the bootstrapped value from the state after the last step
+            next_obs_ohe = torch.stack([ohe(obs.item()) for obs in next_obs])
+            bootstrap_ext_value, bootstrap_int_value = critic_network(next_obs_ohe)
+            
+            # Initialize tensors for returns
+            ext_returns = torch.zeros_like(rewards_storage).to(device)
+            int_returns = torch.zeros_like(intrinsic_rewards_storage).to(device)
+            
+            # Set the initial "next state" return. If an env was done, this is 0, otherwise it's the bootstrap value.
+            # (1.0 - next_done) is a trick to multiply by 0 if done, and 1 if not done.
+            ext_gt_next_state = bootstrap_ext_value.squeeze() * (1.0 - next_done)
+            int_gt_next_state = bootstrap_int_value.squeeze() * (1.0 - next_done)
 
-                # Loop backwards from the last step to the first
-                for t in reversed(range(args.max_steps)):
-                    # Calculate return at step t
-                    rt_ext = rewards_storage[t] + args.gamma * ext_gt_next_state
-                    rt_int = intrinsic_rewards_storage[t] + args.gamma * int_gt_next_state
-                    
-                    # Store the calculated returns
-                    ext_returns[t] = rt_ext
-                    int_returns[t] = rt_int
-                    
-                    # Update the "next state" for the previous step (t-1).
-                    # If an episode was done at step t, the return propagation is cut off (multiplied by 0).
-                    ext_gt_next_state = rt_ext * (1.0 - dones_storage[t])
-                    int_gt_next_state = rt_int * (1.0 - dones_storage[t])
+            # Loop backwards from the last step to the first
+            for t in reversed(range(args.max_steps)):
+                # Calculate return at step t
+                rt_ext = rewards_storage[t] + args.ext_gamma * ext_gt_next_state
+                rt_int = intrinsic_rewards_storage[t] + args.int_gamme * int_gt_next_state
+                
+                # Store the calculated returns
+                ext_returns[t] = rt_ext
+                int_returns[t] = rt_int
+                
+                # Update the "next state" for the previous step (t-1).
+                # If an episode was done at step t, the return propagation is cut off (multiplied by 0).
+                ext_gt_next_state = rt_ext * (1.0 - dones_storage[t])
+                int_gt_next_state = rt_int * (1.0 - dones_storage[t])
             
         # Calculate advantages as the difference between returns and value function estimates
         ext_advantages = ext_returns - ext_values_storage
         int_advantages = int_returns - int_values_storage
 
         advantages = (args.INT_COEFF * int_advantages) + (args.EXT_COEFF * ext_advantages)
+        wandb.log({
+            "advantages/ext_advantages": ext_advantages.mean().item(), "advantages/int_advantages": int_advantages.mean().item()})
         # Normalize the final combined advantages
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
@@ -285,7 +323,7 @@ if __name__ == "__main__":
         # advantages = args.INT_COEFF * int_advantages + args.EXT_COEFF * ext_advantages
 
         # Flatten the batch
-        b_obs = obs_storage.reshape((-1,) + obs_space_shape)
+        b_obs = obs_storage.reshape((-1, obs_space_shape))
         b_logprobs = logprobs_storage.reshape(-1)
         b_actions = actions_storage.reshape(-1)
         b_advantages = advantages.reshape(-1)
@@ -304,9 +342,9 @@ if __name__ == "__main__":
                 _, new_log_probs, entropy = actor_network.get_action(b_obs[mb_inds], b_actions[mb_inds].long())
                 ratio = torch.exp(new_log_probs - b_logprobs[mb_inds])
                 
-                pg_loss1 = -b_advantages[mb_inds] * ratio
-                pg_loss2 = -b_advantages[mb_inds] * torch.clamp(ratio, 1 - args.clip_value, 1 + args.clip_value)
-                policy_loss = torch.max(pg_loss1, pg_loss2).mean()
+                pg_loss1 = b_advantages[mb_inds] * ratio
+                pg_loss2 = b_advantages[mb_inds] * torch.clamp(ratio, 1 - args.clip_value, 1 + args.clip_value)
+                policy_loss = -torch.min(pg_loss1, pg_loss2).mean()
 
                 ext_current_values, int_current_values = critic_network(b_obs[mb_inds])
                 ext_critic_loss = F.mse_loss(ext_current_values.squeeze(), b_ext_returns[mb_inds])

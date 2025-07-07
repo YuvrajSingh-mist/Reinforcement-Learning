@@ -226,7 +226,7 @@ if __name__ == "__main__":
             with torch.no_grad():
                 pred_features = predictor_network(next_obs)
                 target_features = target_network(next_obs)
-                intrinsic_reward = F.mse_loss(pred_features, target_features).item()
+                intrinsic_reward = torch.pow(pred_features - target_features, 2).sum(dim=1)
             
             intrinsic_rewards_storage[step] = intrinsic_reward
 
@@ -244,34 +244,34 @@ if __name__ == "__main__":
                         writer.add_scalar("charts/episodic_return", item['episode']['r'][0], global_step)
                         writer.add_scalar("charts/episodic_length", item['episode']['l'][0], global_step)
 
-       
-            with torch.no_grad():
-                # Get the bootstrapped value from the state after the last step
-                bootstrap_ext_value, bootstrap_int_value = critic_network(next_obs)
-                
-                # Initialize tensors for returns
-                ext_returns = torch.zeros_like(rewards_storage).to(device)
-                int_returns = torch.zeros_like(intrinsic_rewards_storage).to(device)
-                
-                # Set the initial "next state" return. If an env was done, this is 0, otherwise it's the bootstrap value.
-                # (1.0 - next_done) is a trick to multiply by 0 if done, and 1 if not done.
-                ext_gt_next_state = bootstrap_ext_value.squeeze() * (1.0 - next_done)
-                int_gt_next_state = bootstrap_int_value.squeeze() * (1.0 - next_done)
+        # Calculate returns AFTER the rollout is complete
+        with torch.no_grad():
+            # Get the bootstrapped value from the FINAL state after the complete rollout
+            bootstrap_ext_value, bootstrap_int_value = critic_network(next_obs)
+            
+            # Initialize tensors for returns
+            ext_returns = torch.zeros_like(rewards_storage).to(device)
+            int_returns = torch.zeros_like(intrinsic_rewards_storage).to(device)
+            
+            # Set the initial "next state" return. If an env was done, this is 0, otherwise it's the bootstrap value.
+            # (1.0 - next_done) is a trick to multiply by 0 if done, and 1 if not done.
+            ext_gt_next_state = bootstrap_ext_value.squeeze() * (1.0 - next_done)
+            int_gt_next_state = bootstrap_int_value.squeeze() * (1.0 - next_done)
 
-                # Loop backwards from the last step to the first
-                for t in reversed(range(args.max_steps)):
-                    # Calculate return at step t
-                    rt_ext = rewards_storage[t] + args.gamma * ext_gt_next_state
-                    rt_int = intrinsic_rewards_storage[t] + args.gamma * int_gt_next_state
-                    
-                    # Store the calculated returns
-                    ext_returns[t] = rt_ext
-                    int_returns[t] = rt_int
-                    
-                    # Update the "next state" for the previous step (t-1).
-                    # If an episode was done at step t, the return propagation is cut off (multiplied by 0).
-                    ext_gt_next_state = rt_ext * (1.0 - dones_storage[t])
-                    int_gt_next_state = rt_int * (1.0 - dones_storage[t])
+            # Loop backwards from the last step to the first
+            for t in reversed(range(args.max_steps)):
+                # Calculate return at step t
+                rt_ext = rewards_storage[t] + args.gamma * ext_gt_next_state
+                rt_int = intrinsic_rewards_storage[t] + args.gamma * int_gt_next_state
+                
+                # Store the calculated returns
+                ext_returns[t] = rt_ext
+                int_returns[t] = rt_int
+                
+                # Update the "next state" for the previous step (t-1).
+                # If an episode was done at step t, the return propagation is cut off (multiplied by 0).
+                ext_gt_next_state = rt_ext * (1.0 - dones_storage[t])
+                int_gt_next_state = rt_int * (1.0 - dones_storage[t])
             
         # Calculate advantages as the difference between returns and value function estimates
         ext_advantages = ext_returns - ext_values_storage
