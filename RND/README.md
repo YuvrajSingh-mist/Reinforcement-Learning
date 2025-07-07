@@ -28,7 +28,7 @@ This encourages the agent to visit novel states where the prediction error is hi
 
 ## Implementations
 
-This repository includes three main RND implementations:
+This repository includes multiple RND implementations:
 
 ###  **Classic Control (`train_classic.py`)**
 - Environment: CartPole-v1
@@ -41,11 +41,20 @@ This repository includes three main RND implementations:
 - More complex continuous state space
 - Optimized for performance and stability
 
+###  **Mountain Car (`mountain-car.py`)**
+- Environment: MountainCar-v0
+- Sparse reward environment ideal for RND exploration
+- Demonstrates RND's effectiveness in hard exploration problems
+
+
+
 ## Environments
 
 This implementation has been tested on:
 - **CartPole-v1**: Classic control task for balancing a pole on a cart
 - **LunarLander-v3**: Spacecraft landing with continuous observations and discrete actions
+- **MountainCar-v0**: Sparse reward environment where the agent must reach the mountain top
+
 
 ## Algorithm Details
 
@@ -129,6 +138,18 @@ Agent gameplay demonstration:
 
 *Note: In LunarLander, RND helps the agent explore different landing strategies and discover optimal trajectories while learning to land successfully. The intrinsic rewards encourage exploration of various parts of the landing zone.*
 
+### MountainCar-v0
+
+The following demonstrates RND performance on the challenging MountainCar environment with sparse rewards:
+
+Agent gameplay demonstration:
+
+![MountainCar RND Gameplay](images/mountain.gif)
+
+**Detailed Training Metrics**: View the complete training logs and metrics on [Weights & Biases](https://wandb.ai/rentio/cleanRL/reports/RND-PPO-on-MountainCar--VmlldzoxMzQ5MDA1NA)
+
+*Note: MountainCar is a particularly challenging environment for exploration due to its sparse reward structure. The agent only receives reward when reaching the goal at the mountain top. RND's intrinsic motivation is crucial here, as it encourages the agent to explore different positions and velocities, eventually discovering the momentum-building strategy needed to reach the goal. The prediction error helps the agent explore novel state combinations that lead to successful mountain climbing.*
+
 ### FlappyBird
 
 The following demonstrates RND performance on FlappyBird with curiosity-driven exploration:
@@ -140,6 +161,9 @@ Agent gameplay demonstration:
 **Detailed Training Metrics**: View the complete training logs and metrics on [Weights & Biases](https://api.wandb.ai/links/rentio/icqoz8tn)
 
 *Note: In FlappyBird, RND encourages the agent to explore different flight patterns and obstacle navigation strategies. The intrinsic rewards help the agent discover diverse ways to navigate through pipes while learning the core task.*
+
+
+
 
 ## Key Benefits of RND
 
