@@ -1,6 +1,16 @@
 # Random Network Distillation (RND)
 
-This directory contains implementations of Random Network Distillation (RND) combined with Proximal Policy Optimization (PPO) for curiosity-driven exploration in reinforcement learning.
+This directory contains implementations of Random Network Distillation (RND) combined with Proximal Policy Optimization (PPO) for cur### FrozenLake-v1 (8x8 Map)
+
+The following demonstrates RND performance on the challenging FrozenLake 8x8 environment with 64 states:
+
+Agent gameplay demonstration:
+
+![FrozenLake 8x8 RND Gameplay](images/frozen-lake-8x8.gif)
+
+**Detailed Training Metrics**: View the complete training logs and metrics on [Weights & Biases](https://api.wandb.ai/links/rentio/b6xhf0a2)
+
+*Note: FrozenLake 8x8 is a significantly more challenging environment than the standard 4x4 version, with 64 discrete states instead of 16. The stochastic slippery dynamics make exploration particularly difficult, as the agent often slips in unintended directions. RND's intrinsic motivation is crucial here, encouraging systematic exploration of the larger grid world. The prediction error helps the agent discover safe paths through the expanded maze while understanding the stochastic nature of the environment, leading to robust policies that can navigate the complex 8x8 layout.*en exploration in reinforcement learning.
 
 ## Overview
 
@@ -46,6 +56,11 @@ This repository includes multiple RND implementations:
 - Sparse reward environment ideal for RND exploration
 - Demonstrates RND's effectiveness in hard exploration problems
 
+###  **Frozen Lake (`lake.py`)**
+- Environment: FrozenLake-v1 (8x8 map, 64 states)
+- Discrete stochastic environment with slippery dynamics
+- Demonstrates RND on larger discrete state spaces with one-hot encoding
+
 
 
 ## Environments
@@ -54,6 +69,7 @@ This implementation has been tested on:
 - **CartPole-v1**: Classic control task for balancing a pole on a cart
 - **LunarLander-v3**: Spacecraft landing with continuous observations and discrete actions
 - **MountainCar-v0**: Sparse reward environment where the agent must reach the mountain top
+- **FrozenLake-v1**: Discrete 8x8 grid world (64 states) with stochastic slippery movement dynamics
 
 
 ## Algorithm Details
@@ -162,8 +178,17 @@ Agent gameplay demonstration:
 
 *Note: In FlappyBird, RND encourages the agent to explore different flight patterns and obstacle navigation strategies. The intrinsic rewards help the agent discover diverse ways to navigate through pipes while learning the core task.*
 
+### FrozenLake-v1
 
+The following demonstrates RND performance on the stochastic FrozenLake environment:
 
+Agent gameplay demonstration:
+
+![FrozenLake RND Gameplay](images/frozenlake.gif)
+
+**Detailed Training Metrics**: View the complete training logs and metrics on [Weights & Biases](https://api.wandb.ai/links/rentio/xag9itvm)
+
+*Note: FrozenLake is a challenging discrete environment with stochastic dynamics where the agent must navigate a slippery frozen lake to reach the goal while avoiding holes. RND's intrinsic motivation is particularly valuable here as it encourages systematic exploration of the grid world. The prediction error helps the agent discover safe paths and understand the stochastic nature of the environment, leading to more robust policies that can handle the slippery dynamics.*
 
 ## Key Benefits of RND
 

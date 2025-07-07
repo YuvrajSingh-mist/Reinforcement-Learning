@@ -19,7 +19,7 @@ class Config:
     exp_name = "PPO-RND-Vectorized-Frozen"
     seed = 42
     env_id = "FrozenLake-v1"
-    total_timesteps = 1_000_000
+    total_timesteps = 5_000_000
 
     # PPO & Agent settings
     lr = 3e-4
@@ -135,20 +135,26 @@ class TargetNet(nn.Module):
      
 def make_env(env_id, seed, idx, render_mode=None):
     def thunk():
-        env = gym.make(env_id, render_mode=render_mode)
+        env = gym.make(env_id, render_mode=render_mode, map_name='8x8')
         env = gym.wrappers.RecordEpisodeStatistics(env)
         # env = gym.wrappers.NormalizeObservation(env)
         env.action_space.seed(seed + idx)
         return env
     return thunk
 
-def ohe(obs, obs_space=16):
+def ohe(obs, obs_space=16 * 4):
     """
     One-hot encodes the observation for environments with discrete action spaces.
     """
     zeros = torch.zeros(obs_space, dtype=torch.float32, device=device)
-    if isinstance(obs, int):
-        zeros[obs] = 1.0
+    # if isinstance(obs, int):
+    # print(obs)
+    if(not isinstance(obs, int) and isinstance(obs, torch.Tensor)):
+        obs = obs.long().item()  # Ensure obs is a long tensor for indexing
+    else:
+        obs = int(obs)
+        
+    zeros[obs] = 1.0
     
     return zeros
 
@@ -235,7 +241,8 @@ if __name__ == "__main__":
         # Rollout Phase
         for step in range(0, args.max_steps):
             # print(next_obs.shape)
-            next_obs = torch.stack([ohe(obs.item()) for obs in next_obs])
+            next_obs = torch.stack([ohe(obs) for obs in next_obs])
+            # print(next_obs)
             # print(next_obs.shape)
             global_step = (update - 1) * args.batch_size + step * args.num_envs
             obs_storage[step] = next_obs
@@ -256,8 +263,10 @@ if __name__ == "__main__":
             with torch.no_grad():
                 pred_features = predictor_network(next_obs)
                 target_features = target_network(next_obs)
-                intrinsic_reward = torch.pow(pred_features - target_features, 2).sum()
-
+                # print(pred_features)
+                # print(target_features)
+                intrinsic_reward = torch.pow(pred_features - target_features, 2).sum(dim=1)
+            # print(intrinsic_reward)
             intrinsic_rewards_storage[step] = intrinsic_reward
             
             # Step the environment
@@ -282,7 +291,7 @@ if __name__ == "__main__":
         # Calculate returns after the rollout is complete
         with torch.no_grad():
             # Get the bootstrapped value from the state after the last step
-            next_obs_ohe = torch.stack([ohe(obs.item()) for obs in next_obs])
+            next_obs_ohe = torch.stack([ohe(obs) for obs in next_obs])
             bootstrap_ext_value, bootstrap_int_value = critic_network(next_obs_ohe)
             
             # Initialize tensors for returns
