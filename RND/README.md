@@ -116,6 +116,31 @@ Agent gameplay demonstration:
 
 *Note: The results demonstrate that RND enables efficient exploration while successfully learning the main task. The agent learns to balance the pole while the intrinsic rewards encourage exploration of novel states.*
 
+### LunarLander-v2
+
+The following demonstrates RND performance on the more complex LunarLander environment:
+
+Agent gameplay demonstration:
+
+![LunarLander RND Gameplay](images/lunar.gif)
+
+
+**Detailed Training Metrics**: View the complete training logs and metrics on [Weights & Biases](https://api.wandb.ai/links/rentio/p5aqeazk)
+
+*Note: In LunarLander, RND helps the agent explore different landing strategies and discover optimal trajectories while learning to land successfully. The intrinsic rewards encourage exploration of various parts of the landing zone.*
+
+### FlappyBird
+
+The following demonstrates RND performance on FlappyBird with curiosity-driven exploration:
+
+Agent gameplay demonstration:
+
+![FlappyBird RND Gameplay](images/flappy.png)
+
+**Detailed Training Metrics**: View the complete training logs and metrics on [Weights & Biases](https://api.wandb.ai/links/rentio/icqoz8tn)
+
+*Note: In FlappyBird, RND encourages the agent to explore different flight patterns and obstacle navigation strategies. The intrinsic rewards help the agent discover diverse ways to navigate through pipes while learning the core task.*
+
 ## Key Benefits of RND
 
 1. **Simple Implementation**: No need for complex count-based exploration
