@@ -131,7 +131,7 @@ class PredictorNet(nn.Module):
 
 The following image shows the training performance on the CartPole environment with RND:
 
-![CartPole RND Training Results](images/image.png)
+![CartPole RND Training Results](images/pole.png)
 
 Agent gameplay demonstration:
 
