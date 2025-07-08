@@ -7,7 +7,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 import wandb
 
 import cv2
@@ -16,16 +16,16 @@ import imageio
 # ===== CONFIGURATION =====
 class Config:
     # Experiment settings
-    exp_name = "PPO(C)-Pendulum-v1-Vectorized-OriginalReturns"
+    exp_name = "PPO(C)-Pendulum-v1-Vectorized"
     seed = 42
     env_id = "Pendulum-v1"
-    total_timesteps = 50000
+    total_timesteps = 5_000_000
 
     # PPO & Agent settings
     lr = 3e-4
     gamma = 0.99
-    num_envs = 4
-    max_steps = 256
+    num_envs = 8
+    max_steps = 128
     num_minibatches = 4
     PPO_EPOCHS = 4
     clip_value = 0.2
@@ -58,19 +58,27 @@ class ActorNet(nn.Module):
         self.fc1 = layer_init(nn.Linear(state_space, 256))
         self.fc2 = layer_init(nn.Linear(256, 256))
         self.fc3 = layer_init(nn.Linear(256, 16))
-        self.mu = layer_init(nn.Linear(16, action_space), std=0.01)
-        self.sigma = layer_init(nn.Linear(16, action_space), std=0.01)
+        self.mu = layer_init(nn.Linear(16, action_space))
+        self.sigma = nn.Parameter(torch.zeros(1, action_space))  # Log standard deviation
 
     def forward(self, x):
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = torch.tanh(self.fc3(x))
-        mu = self.mu(x)
-        sigma = torch.nn.functional.softplus(self.sigma(x)) + 1e-6
-        return mu, sigma
+        x = torch.nn.functional.tanh(self.fc1(x))
+        x = torch.nn.functional.tanh(self.fc2(x))
+        
+        x_mu = torch.nn.functional.tanh(self.fc3(x))
+        
+        # x_logvar = torch.nn.functional.relu(self.fc3(x))
+        mu = self.mu(x_mu)
+        # sigma_log = torch.nn.functional.softplus(self.sigma(x_logvar))
+        logvar = self.sigma.expand_as(mu)  # Use the same log variance for all actions
+        return mu, logvar.exp()
 
     def get_action(self, x):
         mu, sigma = self.forward(x)
+        # sigma = sigma.expand_as(mu)  # Ensure sigma has the same shape as mu
+        # sigma = torch.exp(sigma)  # If you want to use exp to get
+        #
+        # print("Current mu:", mu, "Current sigma:", sigma)
         dist = torch.distributions.Normal(mu, sigma)
         action = dist.sample()
         log_prob = dist.log_prob(action).sum(1)
@@ -83,7 +91,7 @@ class ActorNet(nn.Module):
         log_probs = dist.log_prob(act).sum(1)
         entropy = dist.entropy().sum(1)
         return log_probs, entropy
-
+    
 
 class CriticNet(nn.Module):
     def __init__(self, state_space):
@@ -94,30 +102,33 @@ class CriticNet(nn.Module):
         self.value = layer_init(nn.Linear(256, 1), std=1.0)
 
     def forward(self, x):
-        x = torch.tanh(self.fc1(x))
-        x = torch.tanh(self.fc2(x))
-        x = torch.tanh(self.fc3(x))
-        return self.value(x)
+        x = torch.nn.functional.tanh(self.fc1(x))
+        x = torch.nn.functional.tanh(self.fc2(x))
+        x = torch.nn.functional.tanh(self.fc3(x))
+        return self.value(x)    
     
 def make_env(env_id, seed, idx, capture_video, run_name, gamma, eval_mode=False, render_mode=None):
     def thunk():
-        if eval_mode:
-            env = gym.make(env_id, render_mode=render_mode)
-        else:
-            env = gym.make(env_id, render_mode=None)
+        env = gym.make(env_id, render_mode=render_mode)
+        env = gym.wrappers.RecordEpisodeStatistics(env) # Still useful for eval logging
+        env = gym.wrappers.ClipAction(env)
+
+        # ONLY apply normalization to training environments
+        if not eval_mode:
             env = gym.wrappers.NormalizeObservation(env)
-            env = gym.wrappers.TransformObservation(env, lambda obs: np.clip(obs, -10, 10), env.observation_space)
+            env = gym.wrappers.TransformObservation(env, lambda obs: np.clip(obs, -10, 10))
             env = gym.wrappers.NormalizeReward(env, gamma=gamma)
             env = gym.wrappers.TransformReward(env, lambda reward: np.clip(reward, -10, 10))
         
-        env = gym.wrappers.ClipAction(env)
-        env = gym.wrappers.RecordEpisodeStatistics(env)
         env.action_space.seed(seed + idx)
         return env
     return thunk
 
-def evaluate(model, device, run_name, gamma, num_eval_eps=10, record=False, render_mode=None):
-    eval_env = gym.make(Config.env_id, render_mode=render_mode)
+
+
+def evaluate(envs, model, device, run_name, gamma, num_eval_eps=10, record=False, render_mode=None):
+    # Create a "raw" evaluation environment without the normalization wrappers
+    eval_env = make_env(Config.env_id, Config.seed, 0, record, run_name, gamma, eval_mode=True, render_mode=render_mode)()
     eval_env.action_space.seed(Config.seed)
     
     model = model.to(device)
@@ -125,26 +136,37 @@ def evaluate(model, device, run_name, gamma, num_eval_eps=10, record=False, rend
     returns = []
     frames = []
 
+    # Get the observation normalization stats from the training envs
+    obs_rms = envs.get_attr("obs_rms")[0] # Get from the first environment in the vector
+
     for eps in tqdm(range(num_eval_eps), desc="Evaluating"):
         obs, _ = eval_env.reset()
         done = False
         episode_reward = 0.0
-
+   
         while not done:
             if record:
                 frame = eval_env.render()
                 frames.append(frame)
 
             with torch.no_grad():
-                mu, _ = model.forward(torch.tensor(obs, device=device, dtype=torch.float32).unsqueeze(0))
-                obs, reward, terminated, truncated, _ = eval_env.step(mu.cpu().numpy().flatten())
+                # Manually normalize the observation before passing it to the model
+                # Note: clip before normalizing, as per the original wrapper order.
+                # The obs_rms.mean and obs_rms.var are numpy arrays.
+                norm_obs = np.clip((obs - obs_rms.mean) / np.sqrt(obs_rms.var + 1e-8), -10, 10)
+                
+                act, _, _ = model.get_action(torch.tensor(norm_obs, device=device, dtype=torch.float32).unsqueeze(0))
+                obs, reward, terminated, truncated, _ = eval_env.step(act.cpu().numpy().flatten())
                 done = terminated or truncated
-                episode_reward += reward
+                
+                episode_reward += reward # Log the RAW reward, not a normalized one
+                
         returns.append(episode_reward)
     
     eval_env.close()
     model.train()
     return returns, frames
+
 
 # --- Main Execution ---
 if __name__ == "__main__":
@@ -160,12 +182,12 @@ if __name__ == "__main__":
             monitor_gym=True,
             save_code=True,
         )
-    writer = SummaryWriter(f"runs/{run_name}")
+    # writer = SummaryWriter(f"runs/{run_name}")
     
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = "cuda"
 
     envs = gym.vector.SyncVectorEnv(
         [make_env(args.env_id, args.seed, i, args.capture_video, run_name, args.gamma) for i in range(args.num_envs)]
@@ -174,8 +196,8 @@ if __name__ == "__main__":
 
     actor_network = ActorNet(envs.single_observation_space.shape[0], envs.single_action_space.shape[0]).to(device)
     critic_network = CriticNet(envs.single_observation_space.shape[0]).to(device)
-    actor_optim = optim.Adam(actor_network.parameters(), lr=args.lr, eps=1e-5)
-    critic_optim = optim.Adam(critic_network.parameters(), lr=args.lr, eps=1e-5)
+    optimizer = optim.Adam(list(actor_network.parameters()) + list(critic_network.parameters()), lr=args.lr, eps=1e-5)
+    # critic_optim = optim.Adam(critic_network.parameters(), lr=args.lr, eps=1e-5)
 
     obs_storage = torch.zeros((args.max_steps, args.num_envs) + envs.single_observation_space.shape).to(device)
     actions_storage = torch.zeros((args.max_steps, args.num_envs) + envs.single_action_space.shape).to(device)
@@ -216,13 +238,8 @@ if __name__ == "__main__":
             if "final_info" in info:
                 for item in info["final_info"]:
                     if item and "episode" in item:
-                        episode_info = item["episode"]
-                        if args.use_wandb:
-                            wandb.log({
-                                "charts/episodic_return": episode_info['r'][0],
-                                "charts/episodic_length": episode_info['l'][0],
-                                "global_step": global_step
-                            })
+                        wandb.log({"charts/episodic_return": item['episode']['r'], "global_step": global_step})
+                        wandb.log({"charts/episodic_length": item['episode']['l'], "global_step": global_step})
 
         # === Advantage Calculation & Returns (YOUR ORIGINAL LOGIC) ===
         with torch.no_grad():
@@ -264,7 +281,7 @@ if __name__ == "__main__":
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
         # === PPO Update Phase ===
-        b_obs = obs_storage.reshape((-1,) + envs.single_observation_space.shape)
+        b_obs = obs_storage.reshape((-1,) +  envs.single_observation_space.shape)
         b_logprobs = logprobs_storage.reshape(-1)
         b_actions = actions_storage.reshape((-1,) + envs.single_action_space.shape)
         b_advantages = advantages.reshape(-1)
@@ -280,9 +297,9 @@ if __name__ == "__main__":
                 new_log_probs, entropy = actor_network.evaluate_get_action(b_obs[mb_inds], b_actions[mb_inds])
                 ratio = torch.exp(new_log_probs - b_logprobs[mb_inds])
 
-                pg_loss1 = -b_advantages[mb_inds] * ratio
-                pg_loss2 = -b_advantages[mb_inds] * torch.clamp(ratio, 1 - args.clip_value, 1 + args.clip_value)
-                policy_loss = torch.max(pg_loss1, pg_loss2).mean()
+                pg_loss1 = b_advantages[mb_inds] * ratio
+                pg_loss2 = b_advantages[mb_inds] * torch.clamp(ratio, 1 - args.clip_value, 1 + args.clip_value)
+                policy_loss = -torch.min(pg_loss1, pg_loss2).mean()
 
                 current_values = critic_network(b_obs[mb_inds]).squeeze()
                 critic_loss = args.VALUE_COEFF * torch.nn.functional.mse_loss(current_values, b_returns[mb_inds])
@@ -290,13 +307,34 @@ if __name__ == "__main__":
                 entropy_loss = entropy.mean()
                 loss = policy_loss - args.ENTROPY_COEFF * entropy_loss + critic_loss
 
-                actor_optim.zero_grad()
-                critic_optim.zero_grad()
+                # actor_optim.zero_grad()
+                optimizer.zero_grad()
                 loss.backward()
-                nn.utils.clip_grad_norm_(actor_network.parameters(), 0.5)
-                nn.utils.clip_grad_norm_(critic_network.parameters(), 0.5)
-                actor_optim.step()
-                critic_optim.step()
+                
+                grad_norm_dict = {}
+                total_norm = 0
+                for name, param in actor_network.named_parameters():
+                    if param.grad is not None:
+                        param_norm = param.grad.data.norm(2)
+                        grad_norm_dict[f"gradients/actor_norm_{name}"] = param_norm.item()
+                        total_norm += param_norm.item() ** 2
+                grad_norm_dict["gradients/actor_total_norm"] = total_norm ** 0.5
+                wandb.log(grad_norm_dict)
+                
+                
+                grad_norm_dict = {}
+                total_norm = 0
+                for name, param in critic_network.named_parameters():
+                    if param.grad is not None:
+                        param_norm = param.grad.data.norm(2)
+                        grad_norm_dict[f"gradients/critic_norm_{name}"] = param_norm.item()
+                        total_norm += param_norm.item() ** 2
+                grad_norm_dict["gradients/critic_total_norm"] = total_norm ** 0.5
+                wandb.log(grad_norm_dict)
+                nn.utils.clip_grad_norm_(list(actor_network.parameters()) + list(critic_network.parameters()), 0.5)
+                # nn.utils.clip_grad_norm_(actor_network.parameters(), 0.5)
+                # actor_optim.step()
+                optimizer.step()
         
         if args.use_wandb and update % 10 == 0:
             wandb.log({
@@ -304,25 +342,30 @@ if __name__ == "__main__":
                 "losses/policy_loss": policy_loss.item(),
                 "losses/value_loss": critic_loss.item(),
                 "losses/entropy": entropy_loss.item(),
-                "charts/learning_rate": actor_optim.param_groups[0]['lr'],
-                "global_step": global_step,
+                "charts/learning_rate": optimizer.param_groups[0]['lr'],
+                "charts/episodic_return": np.mean(rewards_storage.cpu().numpy()),
+                "charts/advantages_mean": b_advantages.mean().item(),
+                "charts/advantages_std": b_advantages.std().item(),
+                "charts/returns_mean": b_returns.mean().item(),
+                # "global_step": global_step,
             })
             print(f"Update {update}, Global Step: {global_step}, Policy Loss: {policy_loss.item():.4f}, Value Loss: {critic_loss.item():.4f}")
     
-        if update % 20 == 0:
-            episodic_returns, _ = evaluate(actor_network, device, run_name, args.gamma)
+        if update % 100 == 0:
+            episodic_returns, _ = evaluate(envs, actor_network, device, run_name, args.gamma)
             avg_return = np.mean(episodic_returns)
             
             if args.use_wandb:
                 wandb.log({
                     "eval/avg_return": avg_return,
-                    "global_step": global_step,
+                    # "global_step": global_step,
                 })
             print(f"Evaluation at step {global_step}: Average raw return = {avg_return:.2f}")
 
     if args.capture_video:
         print("Capturing final evaluation video...")
-        _, eval_frames = evaluate(actor_network, device, run_name, args.gamma, record=True, num_eval_eps=5, render_mode='rgb_array')
+        episodic_returns, eval_frames = evaluate(envs, actor_network, device, run_name, args.gamma, record=True, num_eval_eps=5, render_mode='rgb_array')
+        
         if len(eval_frames) > 0:
             video_path = f"videos/final_eval_{run_name}.mp4"
             os.makedirs(os.path.dirname(video_path), exist_ok=True)

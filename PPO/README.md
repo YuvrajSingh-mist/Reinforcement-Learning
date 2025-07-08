@@ -25,6 +25,7 @@ This repository includes two main PPO implementations:
 This implementation has been tested on:
 - **CartPole-v1**: A classic control task where a pole is attached to a cart that moves along a frictionless track.
 - **LunarLander-v3**: A more complex environment where an agent must land a lunar module on a landing pad.
+- **Pendulum-v1**: A continuous control task where the agent learns to balance a pendulum by applying torque.
 - **CarRacing-v3**: A continuous control environment where the agent learns to drive a car around a track from a top-down view.
 - **ViZDoom Basic**: A 3D first-person shooter environment where the agent learns to navigate and collect health packs.
 
@@ -93,7 +94,7 @@ The following image shows the training performance on the LunarLander environmen
 
 The following image shows the training performance on the CartPole environment:
 
-![Pendulum Training Results](images/cart.png)
+![CartPole Training Results](images/cart.png)
 
 ### ViZDoom Basic
 
@@ -123,6 +124,7 @@ The following image shows the training performance on the CarRacing-v3 environme
 ![Car Racing Training Results](images/car-racing.png)
 
 ![Car Racing Output](images/car-racing.gif)
+
 PPO has been successfully applied to the CarRacing-v3 environment, a challenging continuous control task where the agent must learn to drive a car around a randomly generated track. The environment features:
 - **Continuous action space**: Steering, acceleration, and braking
 - **High-dimensional visual input**: 96x96 RGB images from a top-down view
@@ -130,6 +132,20 @@ PPO has been successfully applied to the CarRacing-v3 environment, a challenging
 
 Detailed training results and analysis can be found in this comprehensive report:
 [**PPO on Car Racing v3 - WandB Report**](https://wandb.ai/rentio/cleanRL/reports/PPO-on-Car-Racing-v3--VmlldzoxMzQ3MTE4MQ?accessToken=alohq5rg73rh5jzaznz68gsi1ylbuc2c3f7octr217iff29lewvau8wed6129231)
+
+### Pendulum
+
+PPO has been successfully applied to the Pendulum-v1 environment, a classic continuous control task where the agent must learn to balance a pendulum by applying torque. The environment features:
+- **Continuous action space**: Single continuous action (torque) between -2 and 2
+- **Continuous state space**: 3-dimensional observation (cos(θ), sin(θ), angular velocity)
+- **Challenging dynamics**: The agent must learn to swing up and balance the pendulum at the upright position
+
+The following shows the training performance and agent behavior:
+
+![Pendulum Training Results](images/pendulum.gif)
+
+Detailed training results and analysis can be found in this comprehensive report:
+[**PPO on Pendulum-v1 - WandB Report**](https://wandb.ai/rentio/cleanRL/reports/PPO-on-Pendulum-v1--VmlldzoxMzQ3MTA5MQ)
 
 
 
