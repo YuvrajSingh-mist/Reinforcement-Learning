@@ -27,6 +27,7 @@ This implementation has been tested on:
 - **LunarLander-v3**: A more complex environment where an agent must land a lunar module on a landing pad.
 - **Pendulum-v1**: A continuous control task where the agent learns to balance a pendulum by applying torque.
 - **BipedalWalker-v3**: A continuous control environment where the agent learns to walk forward using bipedal locomotion.
+- **HalfCheetah-v5**: A continuous control environment where the agent learns to run forward using quadrupedal locomotion.
 - **CarRacing-v3**: A continuous control environment where the agent learns to drive a car around a track from a top-down view.
 - **ViZDoom Basic**: A 3D first-person shooter environment where the agent learns to navigate and collect health packs.
 
@@ -162,6 +163,19 @@ The following shows the training performance and agent behavior:
 Detailed training results and analysis can be found in this comprehensive report:
 [**PPO on BipedalWalker-v3 - WandB Report**](https://api.wandb.ai/links/rentio/v3cfjd2d)
 
+### HalfCheetah
+
+PPO has been successfully applied to the HalfCheetah-v5 environment, a challenging continuous control task where the agent must learn to run forward using quadrupedal locomotion. The environment features:
+- **Continuous action space**: 6-dimensional continuous actions controlling torques for hip, knee, and ankle joints
+- **Continuous state space**: 17-dimensional observation including joint angles, angular velocities, and body orientation
+- **Challenging dynamics**: The agent must learn to coordinate multiple joints to achieve fast and stable running while maintaining balance
+
+The following shows the training performance and agent behavior:
+
+![HalfCheetah Training Results](images/cheetah.gif)
+
+Detailed training results and analysis can be found in this comprehensive report:
+[**PPO on HalfCheetah-v5 - WandB Report**](https://api.wandb.ai/links/rentio/7v587oj3)
 
 
 ## Dependencies
