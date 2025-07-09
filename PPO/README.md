@@ -26,6 +26,7 @@ This implementation has been tested on:
 - **CartPole-v1**: A classic control task where a pole is attached to a cart that moves along a frictionless track.
 - **LunarLander-v3**: A more complex environment where an agent must land a lunar module on a landing pad.
 - **Pendulum-v1**: A continuous control task where the agent learns to balance a pendulum by applying torque.
+- **BipedalWalker-v3**: A continuous control environment where the agent learns to walk forward using bipedal locomotion.
 - **CarRacing-v3**: A continuous control environment where the agent learns to drive a car around a track from a top-down view.
 - **ViZDoom Basic**: A 3D first-person shooter environment where the agent learns to navigate and collect health packs.
 
@@ -146,6 +147,20 @@ The following shows the training performance and agent behavior:
 
 Detailed training results and analysis can be found in this comprehensive report:
 [**PPO on Pendulum-v1 - WandB Report**](https://wandb.ai/rentio/cleanRL/reports/PPO-on-Pendulum-v1--VmlldzoxMzQ3MTA5MQ)
+
+### BipedalWalker
+
+PPO has been successfully applied to the BipedalWalker-v3 environment, a challenging continuous control task where the agent must learn to walk forward using bipedal locomotion. The environment features:
+- **Continuous action space**: 4-dimensional continuous actions controlling hip and knee torques for both legs
+- **Continuous state space**: 24-dimensional observation including hull angle, angular velocity, leg positions, and velocities
+- **Challenging dynamics**: The agent must learn to coordinate multiple joints to achieve stable walking while maintaining balance
+
+The following shows the training performance and agent behavior:
+
+![BipedalWalker Training Results](images/bipedal-walker.gif)
+
+Detailed training results and analysis can be found in this comprehensive report:
+[**PPO on BipedalWalker-v3 - WandB Report**](https://api.wandb.ai/links/rentio/v3cfjd2d)
 
 
 
