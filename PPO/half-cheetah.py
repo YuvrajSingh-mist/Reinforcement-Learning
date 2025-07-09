@@ -19,7 +19,7 @@ class Config:
     exp_name = "PPO(C)-HalfCheetah-v1-Vectorized"
     seed = 42
     env_id = "HalfCheetah-v5"
-    total_timesteps = 5
+    total_timesteps = 5_000_000
 
     # PPO & Agent settings
     lr = 3e-4
