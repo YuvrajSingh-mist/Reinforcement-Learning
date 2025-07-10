@@ -28,6 +28,7 @@ This implementation has been tested on:
 - **Pendulum-v1**: A continuous control task where the agent learns to balance a pendulum by applying torque.
 - **BipedalWalker-v3**: A continuous control environment where the agent learns to walk forward using bipedal locomotion.
 - **HalfCheetah-v5**: A continuous control environment where the agent learns to run forward using quadrupedal locomotion.
+- **Humanoid-v5**: A complex continuous control environment where the agent learns to control a humanoid robot with multiple joints.
 - **CarRacing-v3**: A continuous control environment where the agent learns to drive a car around a track from a top-down view.
 - **ViZDoom Basic**: A 3D first-person shooter environment where the agent learns to navigate and collect health packs.
 
@@ -163,19 +164,16 @@ The following shows the training performance and agent behavior:
 Detailed training results and analysis can be found in this comprehensive report:
 [**PPO on BipedalWalker-v3 - WandB Report**](https://api.wandb.ai/links/rentio/v3cfjd2d)
 
-### HalfCheetah
+## MuJoCo Experiments
 
-PPO has been successfully applied to the HalfCheetah-v5 environment, a challenging continuous control task where the agent must learn to run forward using quadrupedal locomotion. The environment features:
-- **Continuous action space**: 6-dimensional continuous actions controlling torques for hip, knee, and ankle joints
-- **Continuous state space**: 17-dimensional observation including joint angles, angular velocities, and body orientation
-- **Challenging dynamics**: The agent must learn to coordinate multiple joints to achieve fast and stable running while maintaining balance
+PPO has been successfully applied to several challenging MuJoCo continuous control environments that require complex locomotion and coordination:
 
-The following shows the training performance and agent behavior:
+| Environment | Description | Demo | WandB Report |
+|-------------|-------------|------|--------------|
+| **HalfCheetah-v5** | Quadrupedal locomotion task with 6D continuous action space controlling hip, knee, and ankle torques. Agent learns fast and stable running. | ![HalfCheetah](images/cheetah.gif) | [PPO on HalfCheetah-v5](https://wandb.ai/rentio/cleanRL/reports/PPO-C-on-Half-Cheetah--VmlldzoxMzUxNjA5Mg?accessToken=r6rxlnqyjc1lpoq1gx4w2ybt01jsrta2y8p8ycwmcnisgm60hhabbvywl3aepbpa) |
+| **Humanoid-v5** | Complex humanoid control task with high-dimensional action and observation spaces. Agent learns to maintain balance and locomotion with full body coordination. | ![Humanoid](images/humanoid.gif) | [PPO on Humanoid-v5](https://wandb.ai/rentio/cleanRL/reports/PPO-Humanoid--VmlldzoxMzUzMzMwNA) |
 
-![HalfCheetah Training Results](images/cheetah.gif)
-
-Detailed training results and analysis can be found in this comprehensive report:
-[**PPO on HalfCheetah-v5 - WandB Report**](https://api.wandb.ai/links/rentio/7v587oj3)
+These environments represent some of the most challenging continuous control tasks in reinforcement learning, requiring sophisticated policy learning to coordinate multiple joints and maintain dynamic stability.
 
 
 ## Dependencies
