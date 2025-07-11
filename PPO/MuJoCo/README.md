@@ -26,56 +26,6 @@ PPO has been successfully applied to several challenging MuJoCo continuous contr
 | **Ant-v4** | Quadrupedal locomotion task where the agent learns to control a four-legged ant robot to move forward. Requires coordination of 8 joints (2 per leg) to achieve stable walking while maintaining balance and avoiding falls. | 8D continuous (hip and ankle torques for 4 legs) | 27D continuous (joint positions, velocities, and body orientation) | ![Ant](images/ant.gif) | [PPO on Ant-v4](https://wandb.ai/rentio/cleanRL/reports/PPO-Ant--VmlldzoxMzU1NDA2NA) |
 | **Swimmer-v4** | Aquatic locomotion task where the agent learns to control a swimming robot to move forward through water. Requires coordination of multiple joints to generate propulsive forces and maintain directional movement in fluid environment. | 2D continuous (joint torques for swimming motion) | 8D continuous (joint angles, velocities, and body orientation) | ![Swimmer](images/swimmer.gif) | [PPO on Swimmer-v4](https://wandb.ai/rentio/cleanRL/reports/Swimmer-V4-PPO--VmlldzoxMzU1NDEyMA?accessToken=0k2daj964kvs5xdgugt05dx7ssgxlmhxo8y1n0c4uaa1o9w7yo3x0bq7vrnp7sh4) |
 
-## Key Challenges
-
-### HalfCheetah-v5
-- **Locomotion Learning**: Agent must learn efficient running gaits
-- **Speed vs Stability**: Balancing forward velocity with stable movement
-- **Joint Coordination**: Coordinating 6 actuated joints for smooth locomotion
-- **Energy Efficiency**: Learning gaits that maximize speed while minimizing energy
-
-### Humanoid-v5
-- **Balance Control**: Maintaining upright posture while moving
-- **High-Dimensional Control**: Managing many degrees of freedom simultaneously
-- **Dynamic Stability**: Learning to recover from perturbations
-- **Complex Reward Structure**: Balancing multiple objectives (forward progress, stability, energy efficiency)
-
-### Hopper-v5
-- **Single-Leg Balance**: Maintaining stability on one leg while hopping
-- **Hopping Dynamics**: Learning efficient hopping gaits for forward locomotion
-- **Fall Prevention**: Avoiding falls while maximizing forward progress
-- **Timing Control**: Coordinating joint movements for effective push-off and landing
-
-### Walker2d-v5
-- **Bipedal Coordination**: Coordinating two legs for stable walking motion
-- **Gait Learning**: Developing efficient walking patterns and step sequences
-- **Balance Control**: Maintaining upright posture while walking forward
-- **Leg Synchronization**: Timing left and right leg movements for smooth locomotion
-
-### Pusher-v4
-- **Object Manipulation**: Learning to push objects to precise target locations
-- **Multi-Joint Coordination**: Coordinating 7 arm joints for complex manipulation tasks
-- **Spatial Reasoning**: Understanding object-target relationships in 3D space
-- **Force Control**: Applying appropriate forces to move objects without losing control
-
-### Reacher-v4
-- **Precision Control**: Accurately positioning the end effector at target locations
-- **Joint Coordination**: Coordinating shoulder and elbow movements for smooth reaching
-- **Target Tracking**: Adapting to randomly placed targets in the workspace
-- **Efficiency Learning**: Finding optimal paths to targets while minimizing energy expenditure
-
-### Ant-v4
-- **Quadrupedal Coordination**: Coordinating four legs for stable forward locomotion
-- **Multi-Joint Control**: Managing 8 actuated joints simultaneously for smooth movement
-- **Balance Maintenance**: Preventing falls while maintaining forward progress
-- **Gait Development**: Learning efficient walking patterns with four-legged coordination
-
-### Swimmer-v4
-- **Aquatic Locomotion**: Learning to generate propulsive forces in fluid environment
-- **Undulating Motion**: Coordinating joint movements for wave-like swimming patterns
-- **Directional Control**: Maintaining forward movement without drifting off course
-- **Efficiency Optimization**: Maximizing swimming speed while minimizing energy expenditure
-
 ## Implementation Details
 
 All MuJoCo implementations use:
@@ -89,48 +39,6 @@ The MuJoCo environments typically require:
 - Longer training episodes due to environment complexity
 - Careful entropy coefficient tuning for exploration vs exploitation
 - Higher GAE lambda values for better value estimation
-
-## Performance Metrics
-
-### HalfCheetah-v5
-- **Target Performance**: Consistent forward velocity > 1000 units/episode
-- **Training Time**: Typically converges within 2-5M timesteps
-- **Key Metrics**: Average velocity, episode length, stability of gait
-
-### Humanoid-v5
-- **Target Performance**: Sustained upright locomotion > 5000 units/episode
-- **Training Time**: Requires 5-10M timesteps for stable policies
-- **Key Metrics**: Episode length, forward progress, fall frequency, energy efficiency
-
-### Hopper-v5
-- **Target Performance**: Consistent hopping locomotion > 3000 units/episode
-- **Training Time**: Typically converges within 1-3M timesteps
-- **Key Metrics**: Hopping distance, episode length, balance stability, hop efficiency
-
-### Walker2d-v5
-- **Target Performance**: Stable walking locomotion > 4000 units/episode
-- **Training Time**: Typically converges within 2-4M timesteps
-- **Key Metrics**: Walking distance, episode length, gait stability, walking speed
-
-### Pusher-v4
-- **Target Performance**: Successful object pushing with reward > -50 per episode
-- **Training Time**: Typically converges within 2-5M timesteps
-- **Key Metrics**: Object-target distance, manipulation success rate, trajectory efficiency, force control
-
-### Reacher-v4
-- **Target Performance**: Consistent target reaching with reward > -10 per episode
-- **Training Time**: Typically converges within 0.5-2M timesteps
-- **Key Metrics**: Target distance accuracy, reaching efficiency, joint smoothness, success rate
-
-### Ant-v4
-- **Target Performance**: Stable forward locomotion > 4000 units/episode
-- **Training Time**: Typically converges within 3-6M timesteps
-- **Key Metrics**: Forward velocity, episode length, balance stability, gait efficiency
-
-### Swimmer-v4
-- **Target Performance**: Consistent swimming locomotion > 300 units/episode
-- **Training Time**: Typically converges within 1-3M timesteps
-- **Key Metrics**: Swimming speed, directional accuracy, stroke efficiency, energy consumption
 
 ## Files Description
 
