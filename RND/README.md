@@ -190,6 +190,18 @@ Agent gameplay demonstration:
 
 *Note: FrozenLake is a challenging discrete environment with stochastic dynamics where the agent must navigate a slippery frozen lake to reach the goal while avoiding holes. RND's intrinsic motivation is particularly valuable here as it encourages systematic exploration of the grid world. The prediction error helps the agent discover safe paths and understand the stochastic nature of the environment, leading to more robust policies that can handle the slippery dynamics.*
 
+### CarRacing-v3
+
+The following demonstrates RND performance with CNN on the challenging CarRacing environment:
+
+Agent gameplay demonstration:
+
+![CarRacing RND Gameplay](images/car.gif)
+
+**Detailed Training Metrics**: View the complete training logs and metrics on [Weights & Biases](https://wandb.ai/rentio/cleanRL/reports/RND-PPO-w-CNN---VmlldzoxMzU4NTYzNQ?accessToken=peteh2tfa64ls1jpppsx0rp7rk36knn8i4i0nerxges2dpfmt13x9wuzlb7nbcbo)
+
+*Note: CarRacing is a complex continuous control environment with high-dimensional visual observations. RND with CNN architecture enables effective exploration of different racing strategies and track segments. The convolutional neural networks process the visual input while the intrinsic motivation from RND encourages the agent to explore diverse driving behaviors and track areas, leading to improved racing performance through curiosity-driven exploration.*
+
 ## Key Benefits of RND
 
 1. **Simple Implementation**: No need for complex count-based exploration
