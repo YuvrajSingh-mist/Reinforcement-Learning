@@ -19,8 +19,6 @@ This implementation features vectorized PPO training on Atari environments with 
 *PPO agent playing Bowling after 10M training steps - demonstrating learned bowling strategies and consistent scoring*
 
 
-*PPO agent playing Bowling after 10M training steps - demonstrating learned bowling strategies and consistent scoring*
-
 #### Boxing
 ![Boxing Agent](images/boxing.gif)
 
