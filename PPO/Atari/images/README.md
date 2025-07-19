@@ -6,25 +6,11 @@ This directory contains **Proximal Policy Optimization (PPO)** implementations f
 
 This implementation features vectorized PPO training on Atari environments with proper preprocessing, frame stacking, and environment wrappers. The code includes both custom implementations and Stable Baselines3 benchmarks for comparison.
 
-### 🏓 Trained Agents in Action
+### 🏓 Trained Agent in Action
 
-#### Pong
-![Pong Agent](images/pong.gif)
+![Pong Agent](pong.mp4)
 
 *PPO agent playing Pong after 10M training steps - achieving consistent wins against the built-in AI opponent*
-
-#### Bowling
-![Bowling Agent](images/bowling.gif)
-
-*PPO agent playing Bowling after 10M training steps - demonstrating learned bowling strategies and consistent scoring*
-
-
-*PPO agent playing Bowling after 10M training steps - demonstrating learned bowling strategies and consistent scoring*
-
-#### Boxing
-![Boxing Agent](images/boxing.gif)
-
-*PPO agent playing Boxing after 10M training steps - showing aggressive fighting strategies and effective combat techniques*
 
 ## 🎯 Supported Games
 
@@ -126,13 +112,9 @@ Training videos are saved in the `images/` directory:
 - `bowling.mp4` - Trained Bowling agent gameplay
 
 ### Detailed Training Reports
-📈 **[PPO Atari Pong - Training Report](https://wandb.ai/rentio/cleanRL/reports/PPO-Atari-Pong--VmlldzoxMzY0NzA5NA?accessToken=0f5b8n8lprxffdwlhij5n9sfjlg077uqesbtv5g3wo28pla2gakfgre0t9j5ud4a)**
+📈 **[View Complete Training Report on Weights & Biases](https://wandb.ai/rentio/cleanRL/reports/PPO-Atari-Pong--VmlldzoxMzY0NzA5NA?accessToken=0f5b8n8lprxffdwlhij5n9sfjlg077uqesbtv5g3wo28pla2gakfgre0t9j5ud4a)**
 
-🎳 **[PPO Atari Bowling - Training Report](https://wandb.ai/rentio/cleanRL/reports/PPO-Atari-Bowling--VmlldzoxMzY0NzA2MQ?accessToken=w5rxv2jqkh8rw3wmzenkfsmnggv61294ksiw44ma05hbv8i11234fuoygk1etjff)**
-
-🥊 **[PPO Atari Boxing - Training Report](https://wandb.ai/rentio/cleanRL/reports/PPO-Atari-Boxing--VmlldzoxMzY0NzA1OQ?accessToken=6yamu6w9kl2w8t799n7p28dfqupd7xvfkile82vuf4usdw8w4idx68fmbnzl5eva)**
-
-The W&B reports include:
+The W&B report includes:
 - Training curves and learning progression
 - Hyperparameter sweeps and optimization
 - Performance metrics and comparisons
