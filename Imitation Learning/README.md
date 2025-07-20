@@ -1,27 +1,32 @@
-# Behavioral Cloning for GridWorld
 
-This project implements Behavioral Cloning (BC) for learning policies from expert demonstrations in a GridWorld environment. The agent learns to imitate expert behavior by training a neural network to predict actions given states.
+# Imitation Learning for GridWorld
+
+This project implements core Imitation Learning algorithms—including Behavioral Cloning (BC) and Dataset Aggregation (DAgger)—for learning policies from expert demonstrations in a GridWorld environment. The agent learns to imitate expert behavior by training a neural network to predict actions given states, and can further improve using interactive data collection (DAgger).
+
 
 ## 🎯 Overview
 
-Behavioral Cloning is a supervised learning approach to imitation learning where:
-- Expert demonstrations are collected as state-action pairs
-- A policy network is trained to minimize the difference between predicted and expert actions
-- The learned policy can then be evaluated in the environment
+Imitation Learning is a family of techniques where agents learn to perform tasks by mimicking expert behavior. This project includes:
+
+- **Behavioral Cloning (BC):** A supervised learning approach where a policy is trained on expert state-action pairs to directly imitate the expert.
+- **DAgger (Dataset Aggregation):** An interactive algorithm that iteratively collects new data by letting the agent act and querying the expert for corrections, reducing compounding errors.
+
+The learned policies can then be evaluated in the environment.
 
 ## 📁 Project Structure
 
 ```
-├── BC.py                    # Main behavioral cloning implementation
-├── gridworld.py            # GridWorld environment
-├── gridworld.json          # Environment configuration
+├── BC.py                    # Behavioral Cloning implementation
+├── DAgger.py                # DAgger (Dataset Aggregation) implementation
+├── gridworld.py             # GridWorld environment
+├── gridworld.json           # Environment configuration
 ├── images/
-│   └── image.png           # GridWorld visualization
+│   └── image.png            # GridWorld visualization
 ├── imitation-learning-tutorials/
 │   ├── expert_data/
-│   │   └── ckpt0.pkl       # Expert demonstration data
-│   └── ...                 # Additional tutorial notebooks
-└── README.md               # This file
+│   │   └── ckpt0.pkl        # Expert demonstration data
+│   └── ...                  # Additional tutorial notebooks
+└── README.md                # This file
 ```
 
 ## 🖼️ GridWorld Visualization
@@ -38,17 +43,28 @@ Behavioral Cloning is a supervised learning approach to imitation learning where
 pip install torch tqdm wandb
 ```
 
+
 ### Running the Code
 
+#### Behavioral Cloning
 ```bash
 python BC.py
 ```
-
 This will:
 1. Load expert demonstrations from `expert_data/ckpt0.pkl`
 2. Train a policy network using behavioral cloning
 3. Evaluate the policy every 100 episodes
 4. Log training progress to Weights & Biases
+
+#### DAgger
+```bash
+python DAgger.py
+```
+This will:
+1. Initialize with expert demonstrations
+2. Iteratively collect new data by running the agent and querying the expert
+3. Aggregate datasets and retrain the policy
+4. Evaluate and log progress
 
 ## 🧠 Model Architecture
 
@@ -84,6 +100,7 @@ class Config:
     run_name: str = "bc-gridworld"           # WandB run name
 ```
 
+
 ## 📈 Key Components
 
 ### BC Class
@@ -91,27 +108,45 @@ class Config:
 - `train()`: Trains on expert state-action pairs for one episode
 - `evaluate()`: Evaluates policy performance in the environment
 
+### DAgger Class
+- `__init__()`: Initializes policy, expert, and data buffers
+- `collect_data()`: Runs the current policy, queries expert for corrections, and aggregates new data
+- `train()`: Retrains the policy on the aggregated dataset
+- `evaluate()`: Evaluates policy performance in the environment
+
 ### Helper Functions
 - `sample_action()`: Samples actions from policy logits (greedy/stochastic)
 - `one_hot_encode()`: Converts state integers to one-hot vectors
 
-### Training Loop
+### BC Training Loop Example
 ```python
 curr = 0
 for i, length in enumerate(timestep_lens):
     # Extract episode data
     expert_states = all_states[curr: curr + length]
     expert_actions = all_actions[curr: curr + length]
-    
     # Train on this episode
     loss = model.train(expert_states, expert_actions)
-    
     # Evaluate every 100 episodes
     if i % 100 == 0:
         rew = model.evaluate()
         print(f"Episode {i}, Eval Reward: {rew}")
-    
     curr += length
+```
+
+### DAgger Training Loop Example
+```python
+for iteration in range(num_iterations):
+    # Collect data using current policy and expert
+    new_states, new_actions = model.collect_data()
+    # Aggregate with previous data
+    dataset.add(new_states, new_actions)
+    # Retrain policy
+    model.train(dataset.states, dataset.actions)
+    # Evaluate
+    if iteration % 5 == 0:
+        rew = model.evaluate()
+        print(f"DAgger Iteration {iteration}, Eval Reward: {rew}")
 ```
 
 ## 🎮 Environment Details
