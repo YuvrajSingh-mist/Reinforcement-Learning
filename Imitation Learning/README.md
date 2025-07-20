@@ -114,6 +114,13 @@ class Config:
 - `train()`: Retrains the policy on the aggregated dataset
 - `evaluate()`: Evaluates policy performance in the environment
 
+### Plots
+
+- BC and DAgger training losses and evaluation rewards are logged to Weights & Biases for visualization.
+
+![BC Loss](images/BC.png)
+![DAgger Loss](images/DAgger.png)
+
 ### Helper Functions
 - `sample_action()`: Samples actions from policy logits (greedy/stochastic)
 - `one_hot_encode()`: Converts state integers to one-hot vectors
