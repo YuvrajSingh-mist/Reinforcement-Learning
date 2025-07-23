@@ -87,6 +87,9 @@ Key features:
 <p align="center">
   <img src="image.png" width="400"/>
 </p>
+<p align="center">
+  <img src="https://github.com/PettingZoo-Team/PettingZoo/raw/master/imgs/pong.gif" width="400"/>
+</p>
 
 ### IPPO WandB Report
 [![IPPO WandB Report](https://img.shields.io/badge/WandB-IPPO-blue?logo=wandb)](https://wandb.ai/rentio/cleanRL/reports/IPPO-Pong--VmlldzoxMzcxMDgwMA?accessToken=pcozaxci9gcrt0z2k43layaab7huqpjkt5goorcxwspjbupherpw0qhyu1iajlqy)
