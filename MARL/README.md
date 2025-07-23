@@ -14,11 +14,12 @@ This mini-project demonstrates MARL algorithms, implemented and trained on the P
 3. [Hyper-parameters](#hyper-parameters)
 4. [Training Details](#training-details)
 5. [IPPO](#ippo)
-6. [Self Play](#self-play)
-7. [Evaluation](#evaluation)
-8. [Saving & Loading Checkpoints](#saving--loading-checkpoints)
-9. [Dependencies](#dependencies)
-10. [References](#references)
+6. [MAPPO](#mappo)
+7. [Self Play](#self-play)
+8. [Evaluation](#evaluation)
+9. [Saving & Loading Checkpoints](#saving--loading-checkpoints)
+10. [Dependencies](#dependencies)
+11. [References](#references)
 
 ---
 
@@ -82,6 +83,25 @@ Key features:
 * **Network**: shared conv tower → 512-unit MLP. Separate **actor** logits and **critic** value head per agent.
 * **Self-play**: agents interact in the same vectorised env. Rewards are stored separately and GAE/returns are computed per-agent.
 * **Optimisation**: Adam with gradient clipping (0.5) + orthogonal initialisation.
+
+<p align="center">
+  <img src="image.png" width="400"/>
+</p>
+
+### IPPO WandB Report
+[![IPPO WandB Report](https://img.shields.io/badge/WandB-IPPO-blue?logo=wandb)](https://wandb.ai/rentio/cleanRL/reports/IPPO-Pong--VmlldzoxMzcxMDgwMA?accessToken=pcozaxci9gcrt0z2k43layaab7huqpjkt5goorcxwspjbupherpw0qhyu1iajlqy)
+
+---
+
+## MAPPO
+`MAPPO` (Multi-Agent Proximal Policy Optimization) is a centralized variant of PPO for multi-agent environments. It leverages shared experience and centralized training for improved stability and performance in cooperative or competitive settings.
+
+* Centralized critic for better credit assignment.
+* Shared policy or separate policies per agent.
+* Suitable for environments with many agents or complex interactions.
+* Can be implemented using PettingZoo and PyTorch, similar to IPPO.
+
+---
 
 ## Evaluation
 The `evaluate` function rolls out **`num_eval_eps`** episodes deterministically (greedy actions) and logs:
