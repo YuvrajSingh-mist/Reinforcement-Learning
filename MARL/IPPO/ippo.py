@@ -94,14 +94,14 @@ class Agent(nn.Module):
     def get_value(self, x):  
         x = x.clone()
         x = x.permute(0, 3, 1, 2)
-        x[:, :4, :, :] /= 255.0
+        # x[:, :4, :, :] /= 255.0
         return self.critic(self.get_features(x))
 
     def get_action(self, x, action=None, deterministic=False):
         # print("No eval: ", x.shape)
         x = x.clone()
         x = x.permute(0, 3, 1, 2)
-        x[:, :4, :, :] /= 255.0
+        # x[:, :4, :, :] /= 255.0
         
         features = self.get_features(x)
         logits = self.actor(features)
@@ -120,7 +120,7 @@ class Agent(nn.Module):
         # print("Eval: ", x.shape)
         x = x.clone()
         x = x.permute(0, 3, 1, 2)
-        x[:, :4, :, :] /= 255.0
+        # x[:, :4, :, :] /= 255.0
         features = self.get_features(x)
         logits = self.actor(features)
         dist = torch.distributions.Categorical(logits=logits)
@@ -279,8 +279,7 @@ if __name__ == "__main__":
             global_step += args.num_envs * 2
             masks = []
             for agent_idx in range(args.num_agents):
-                
-                mask = next_obs[:, 0, 0, (4 + agent_idx)] == 1.0 #1d tensor
+                mask = next_obs[:, 0, 0, (4 + agent_idx)] == 255.0  # agent indicator is 255 for the agent
                 masks.append(mask)
                 
             obs_storage[step] = next_obs
@@ -321,7 +320,7 @@ if __name__ == "__main__":
         #Creating masks for GAE
             masks = []
             for agent_idx in range(args.num_agents):
-                mask = next_obs[:, 0, 0, (4 + agent_idx)] == 1.0
+                mask = next_obs[:, 0, 0, (4 + agent_idx)] == 255.0
                 masks.append(mask)
 
             advantages = torch.zeros(( args.max_steps, args.num_envs)).to(device)
@@ -365,7 +364,7 @@ if __name__ == "__main__":
         
         # NICE IDEA BY DEEPSEEK TO JUST CHOOSE THE RANDOM BATCHES BASED ON MASKS FIRST
         for agent_idx in range(args.num_agents):
-            mask = next_obs[:, 0, 0, (4 + agent_idx)] == 1.0
+            mask = next_obs[:, 0, 0, (4 + agent_idx)] == 255.0
             masks.append(mask)
             
             # Get all indices for this agent
