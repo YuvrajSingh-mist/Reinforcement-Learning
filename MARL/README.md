@@ -91,9 +91,24 @@ The `evaluate` function rolls out **`num_eval_eps`** episodes deterministically 
 Setting `record=True` captures frames and stitches them into an MP4 (wandb video if enabled).
 
 ## Self Play
-`Self Play/play.py` lets you watch two trained policies compete (or a human vs. agent, if you wish to extend it).
+Self-play utilities live in the `Self Play/` directory and allow you to evaluate or continue training agents against each other.
 
-Run with a checkpoint path:
+| File | Purpose |
+|------|---------|
+| `Self Play/play.py` | Render two trained agents (or human vs. agent) in real-time. |
+| `Self Play/self_play.py` | Alternate driver script for self-play training experiments. |
+| `Self Play/pt files/` | Example checkpoint `Pong-MARL.pt`. |
+
+### Quick Demo
+Run a head-to-head match:
+```bash
+python "Self Play/play.py" --checkpoint "pt files/Pong-MARL.pt"
+```
+
+### WandB Report
+[![WandB Report](https://img.shields.io/badge/WandB-Report-blue?logo=wandb)](https://api.wandb.ai/links/rentio/a74ndy24)
+
+The report aggregates self-play learning curves, matchup scores, and evaluation videos.
 ## Saving & Loading Checkpoints
 `save_checkpoint` serialises the actor + optimizer state every 200 updates (and at finish) under `pt files/`.  To resume:
 ```python
