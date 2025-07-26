@@ -12,7 +12,7 @@ import wandb
 import cv2
 import imageio
 # import ale_py
-from pettingzoo.butterfly import cooperative_pong_v5
+from pettingzoo.butterfly import knights_archers_zombies_v10
 import importlib
 import supersuit as ss
 
@@ -21,11 +21,11 @@ class Config:
     # Experiment settings
     exp_name = "PPO-PettingZoo-Pong-MAPPO"
     seed = 42
-    env_id = "cooperative_pong_v5"  # Environment ID
+    env_id = "knights_archers_zombies_v10"  # Environment ID
     total_timesteps = 10_000_000  # Standard metric for vectorized training
 
     # PPO & Agent settings
-    lr = 2e-4
+    lr = 2.5e-4
     gamma = 0.99
     num_envs = 16  # Number of parallel environments
     max_steps = 128  # Steps per rollout per environment (aka num_steps)
@@ -33,7 +33,7 @@ class Config:
     PPO_EPOCHS = 4
     clip_value = 0.1 
     clip_coeff = 0.1  # Value clipping coefficient
-    ENTROPY_COEFF = 0.01
+    ENTROPY_COEFF = 0.001
     
     VALUE_COEFF = 0.5
     
@@ -45,7 +45,7 @@ class Config:
     GAE = 0.95  # Generalized Advantage Estimation
     anneal_lr = True  # Whether to linearly decay the learning rate
     max_grad_norm = 0.5  # Gradient clipping value
-    num_agents = 2  # Number of agents in the environment
+    num_agents = 4  # Number of agents in the environment
     
     # Derived values
     @property
@@ -56,7 +56,10 @@ class Config:
     def minibatch_size(self):
         return self.batch_size // self.num_minibatches
 
-
+# --- Preprocessing ---
+TARGET_HEIGHT = 64
+TARGET_WIDTH = 64
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 # --- Networks ---
@@ -70,7 +73,7 @@ class Actor(nn.Module):
         super(Actor, self).__init__()
         # Shared CNN feature extractor
         self.network = nn.Sequential(
-            layer_init(nn.Conv2d(6, 32, kernel_size=8, stride=4)),
+            layer_init(nn.Conv2d(8, 32, kernel_size=8, stride=4)),
             nn.ReLU(),
             layer_init(nn.Conv2d(32, 64, kernel_size=4, stride=2)),
             nn.ReLU(),
@@ -129,7 +132,7 @@ class Critic(nn.Module):
         super(Critic, self).__init__()
         # Shared CNN feature extractor
         self.network = nn.Sequential(
-            layer_init(nn.Conv2d(6 * args.num_agents, 32, kernel_size=8, stride=4)),
+            layer_init(nn.Conv2d(8 * args.num_agents, 32, kernel_size=8, stride=4)),
             nn.ReLU(),
             layer_init(nn.Conv2d(32, 64, kernel_size=4, stride=2)),
             nn.ReLU(),
@@ -159,9 +162,9 @@ class Critic(nn.Module):
 # --- Environment Creation ---
 def make_env(env_id, seed, idx, run_name, eval_mode=False):
     
-    env = importlib.import_module(f"pettingzoo.butterfly.{args.env_id}").parallel_env()
+    env = knights_archers_zombies_v10.parallel_env(vector_state=False, black_death=True)
     # env = gym.wrappers.RecordEpisodeStatistics(env)
-    env.reset(seed=seed)  # <--- Required to initialize np_random
+    # env.reset(seed=seed)  # <--- Required to initialize np_random
     env = ss.max_observation_v0(env, 2)
     # env = ss.frame_skip_v0(env, 4)
     # env = ss.clip_reward_v0(env, lower_bound=-1, upper_bound=1)
@@ -187,7 +190,7 @@ def reshape_obs_shape(obs):
     return ma_obs
 
 def evaluate(model, device, seed, num_eval_eps=10, record=False):
-    eval_env = cooperative_pong_v5.env(render_mode="rgb_array")
+    eval_env = knights_archers_zombies_v10.env(render_mode="rgb_array", vector_state=False, black_death=True)
     env = ss.max_observation_v0(eval_env, 2)
     # env = ss.clip_reward_v0(env, lower_bound=-1, upper_bound=1)
     env = ss.color_reduction_v0(env, mode="B")
@@ -264,6 +267,8 @@ def evaluate(model, device, seed, num_eval_eps=10, record=False):
             cv2.destroyAllWindows()
 
     eval_env.close()
+    
+    # for net in actor_networks:
     model.train()
     
     avg_return1 = np.mean(all_episode_rewards['paddle_0'])
@@ -579,8 +584,6 @@ if __name__ == "__main__":
                     # print(new_log_probs, '    ', mb_logprobs)
                     # Policy loss
                     wandb.log({
-                        "policy/old_logprobs": mb_logprobs.mean().item(),
-                        "policy/new_logprobs": new_log_probs.mean().item(),
                         "policy/ratio": ratio.mean().item(),
                         
                     })

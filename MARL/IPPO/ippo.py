@@ -94,14 +94,14 @@ class Agent(nn.Module):
     def get_value(self, x):  
         x = x.clone()
         x = x.permute(0, 3, 1, 2)
-        # x[:, :4, :, :] /= 255.0
+        x[:, :4, :, :] /= 255.0
         return self.critic(self.get_features(x))
 
     def get_action(self, x, action=None, deterministic=False):
         # print("No eval: ", x.shape)
         x = x.clone()
         x = x.permute(0, 3, 1, 2)
-        # x[:, :4, :, :] /= 255.0
+        x[:, :4, :, :] /= 255.0
         
         features = self.get_features(x)
         logits = self.actor(features)
@@ -120,7 +120,7 @@ class Agent(nn.Module):
         # print("Eval: ", x.shape)
         x = x.clone()
         x = x.permute(0, 3, 1, 2)
-        # x[:, :4, :, :] /= 255.0
+        x[:, :4, :, :] /= 255.0
         features = self.get_features(x)
         logits = self.actor(features)
         dist = torch.distributions.Categorical(logits=logits)

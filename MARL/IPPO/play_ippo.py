@@ -7,7 +7,7 @@ from pettingzoo.atari import pong_v3
 import supersuit as ss
 
 # Import your Agent class from the correct path
-from play import Agent
+from ippo import Agent
 
 # --- Load Model ---
 def load_agent(model_path, action_space):
