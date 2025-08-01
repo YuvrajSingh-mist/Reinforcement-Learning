@@ -243,7 +243,7 @@ class TargetNet(nn.Module):
             nn.ReLU(),
         )
         self.out = nn.Linear(512, 256)
-
+     
     def forward(self, x):
         x = x.clone().permute(0, 3, 1, 2)
         feats = self.feature_extractor(x)
@@ -417,6 +417,9 @@ if __name__ == "__main__":
     actor_network = Actor(single_action_space.n)
     predictor_network = PredictorNet()
     target_network = TargetNet()
+    for params in target_network.paramters():
+        params.requires_grad = False
+    
     # target_network.load_state_dict(predictor_network.state_dict())
     target_network.eval()
 
@@ -775,7 +778,7 @@ if __name__ == "__main__":
                 mb_obs_all_agents = b_obs_next[mb_inds].reshape(-1, *single_observation_space.shape)
                 pred_feat = predictor_network(mb_obs_all_agents)
                 targ_feat = target_network(mb_obs_all_agents)
-                intrinsic_loss = (pred_feat - targ_feat).pow(2).mean(1).mean()
+                intrinsic_loss = (pred_feat - targ_feat.detach()).pow(2).mean(1).mean()
 
                 loss = policy_loss_total - args.ENTROPY_COEFF * entropy_loss + critic_loss + intrinsic_loss
 
