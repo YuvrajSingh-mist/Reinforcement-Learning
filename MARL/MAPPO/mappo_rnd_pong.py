@@ -12,7 +12,7 @@ import wandb
 import cv2
 import imageio
 # import ale_py
-from pettingzoo.butterfly import knights_archers_zombies_v10
+from pettingzoo.butterfly import cooperative_pong_v5
 import importlib
 import supersuit as ss
 
@@ -21,19 +21,26 @@ class Config:
     # Experiment settings
     exp_name = "PPO-PettingZoo-Pong-MAPPO"
     seed = 42
-    env_id = "knights_archers_zombies_v10"  # Environment ID
+    env_id = "cooperative_pong_v5"  # Environment ID
     total_timesteps = 10_000_000  # Standard metric for vectorized training
 
     # PPO & Agent settings
-    lr = 2.5e-4
-    gamma = 0.99
+    lr = 3e-4
+    # Discount factors for extrinsic and intrinsic learning
+    ext_gamma = 0.99  # Extrinsic discount
+    int_gamma = 0.999  # Intrinsic discount
+    gamma = ext_gamma  # Back-compat single gamma
+
+    # Advantage scaling coefficients (see CarRacing RND)
+    EXT_COEFF = 2.0
+    INT_COEFF = 1.0
     num_envs = 16  # Number of parallel environments
     max_steps = 128  # Steps per rollout per environment (aka num_steps)
     num_minibatches = 4
     PPO_EPOCHS = 4
-    clip_value = 0.1 
-    clip_coeff = 0.1  # Value clipping coefficient
-    ENTROPY_COEFF = 0.001
+    clip_value = 0.2 
+    clip_coeff = 0.2  # Value clipping coefficient
+    ENTROPY_COEFF = 0.01
     
     VALUE_COEFF = 0.5
     
@@ -45,7 +52,7 @@ class Config:
     GAE = 0.95  # Generalized Advantage Estimation
     anneal_lr = True  # Whether to linearly decay the learning rate
     max_grad_norm = 0.5  # Gradient clipping value
-    num_agents = 4  # Number of agents in the environment
+    num_agents = 2  # Number of agents in the environment
     
     # Derived values
     @property
@@ -56,10 +63,7 @@ class Config:
     def minibatch_size(self):
         return self.batch_size // self.num_minibatches
 
-# --- Preprocessing ---
-TARGET_HEIGHT = 64
-TARGET_WIDTH = 64
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 
 # --- Networks ---
@@ -68,12 +72,53 @@ def layer_init(layer, std=np.sqrt(2), bias_const=0.0):
     torch.nn.init.constant_(layer.bias, bias_const)
     return layer
 
+
+from pettingzoo.utils.wrappers import BaseParallelWrapper
+
+class RewardShapingWrapper(BaseParallelWrapper):
+    """
+    This wrapper reshapes the reward to be sparse and meaningful.
+    - +1 for hitting the ball back (detecting a change in ball's x-velocity).
+    - -1 for the ball going off-screen (termination).
+    - 0 for all other timesteps.
+    """
+    def __init__(self, env):
+        super().__init__(env)
+        # We need to access the environment's internal state.
+        self.unwrapped_env = env.unwrapped 
+        self._last_ball_x_velocity = {agent: 0 for agent in self.possible_agents}
+
+    def reset(self, seed=None, options=None):
+        observations, infos = super().reset(seed=seed, options=options)
+        # Store the initial velocity of the ball
+        self._last_ball_x_velocity = self.unwrapped_env.ball.velocity[0]
+        return observations, infos
+
+    def step(self, actions):
+        observations, original_rewards, terminations, truncations, infos = self.env.step(actions)
+        
+        current_ball_x_velocity = self.unwrapped_env.ball.velocity[0]
+        
+        hit_detected = np.sign(current_ball_x_velocity) != np.sign(self._last_ball_x_velocity) and self._last_ball_x_velocity != 0
+        self._last_ball_x_velocity = current_ball_x_velocity
+
+        new_rewards = {}
+        for agent in self.agents:
+            if hit_detected:
+                new_rewards[agent] = 1.0  # Big reward for hitting!
+            elif terminations[agent]:
+                new_rewards[agent] = -1.0 # Big penalty for losing
+            else:
+                new_rewards[agent] = 0.0   # No reward for waiting
+        
+        return observations, new_rewards, terminations, truncations, infos
+
 class Actor(nn.Module):
     def __init__(self, action_space):
         super(Actor, self).__init__()
         # Shared CNN feature extractor
         self.network = nn.Sequential(
-            layer_init(nn.Conv2d(8, 32, kernel_size=8, stride=4)),
+            layer_init(nn.Conv2d(6, 32, kernel_size=8, stride=4)),
             nn.ReLU(),
             layer_init(nn.Conv2d(32, 64, kernel_size=4, stride=2)),
             nn.ReLU(),
@@ -128,11 +173,12 @@ class Actor(nn.Module):
     
 
 class Critic(nn.Module):
+    """Bird-eye critic with separate extrinsic and intrinsic value heads."""
     def __init__(self):
         super(Critic, self).__init__()
         # Shared CNN feature extractor
         self.network = nn.Sequential(
-            layer_init(nn.Conv2d(8 * args.num_agents, 32, kernel_size=8, stride=4)),
+            layer_init(nn.Conv2d(6 * args.num_agents, 32, kernel_size=8, stride=4)),
             nn.ReLU(),
             layer_init(nn.Conv2d(32, 64, kernel_size=4, stride=2)),
             nn.ReLU(),
@@ -144,7 +190,9 @@ class Critic(nn.Module):
         )
         # 
         # Critic head
-        self.critic = layer_init(nn.Linear(512, 1), std=1.0)
+        # Two value heads
+        self.value_ext = layer_init(nn.Linear(512, 1), std=1.0)
+        self.value_int = layer_init(nn.Linear(512, 1), std=1.0)
 
     def get_features(self, x):
         return self.network(x)
@@ -156,15 +204,58 @@ class Critic(nn.Module):
         # x[:, 6:10, :, :] /= 255.0
         # print(x.shape)
         features = self.get_features(x)
-        logits = self.critic(features)
-        return logits
+        return self.value_ext(features), self.value_int(features)
+
+# --- RND Networks ---
+class PredictorNet(nn.Module):
+    def __init__(self):
+        super(PredictorNet, self).__init__()
+        self.feature_extractor = nn.Sequential(
+            layer_init(nn.Conv2d(6, 32, kernel_size=8, stride=4)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(32, 64, kernel_size=4, stride=2)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, stride=1)),
+            nn.ReLU(),
+            nn.Flatten(),
+            layer_init(nn.Linear(64 * 7 * 7, 512)),
+            nn.ReLU(),
+        )
+        self.out = layer_init(nn.Linear(512, 256))
+
+    def forward(self, x):
+        x = x.clone().permute(0, 3, 1, 2)
+        feats = self.feature_extractor(x)
+        return self.out(feats)
+
+class TargetNet(nn.Module):
+    def __init__(self):
+        super(TargetNet, self).__init__()
+        self.feature_extractor = nn.Sequential(
+            layer_init(nn.Conv2d(6, 32, kernel_size=8, stride=4)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(32, 64, kernel_size=4, stride=2)),
+            nn.ReLU(),
+            layer_init(nn.Conv2d(64, 64, kernel_size=3, stride=1)),
+            nn.ReLU(),
+            nn.Flatten(),
+            layer_init(nn.Linear(64 * 7 * 7, 512)),
+            nn.ReLU(),
+        )
+        self.out = nn.Linear(512, 256)
+     
+    def forward(self, x):
+        x = x.clone().permute(0, 3, 1, 2)
+        feats = self.feature_extractor(x)
+        return self.out(feats)
 
 # --- Environment Creation ---
 def make_env(env_id, seed, idx, run_name, eval_mode=False):
     
-    env = knights_archers_zombies_v10.parallel_env(vector_state=False, black_death=True)
+    env = importlib.import_module(f"pettingzoo.butterfly.{args.env_id}").parallel_env()
     # env = gym.wrappers.RecordEpisodeStatistics(env)
-    # env.reset(seed=seed)  # <--- Required to initialize np_random
+    env.reset(seed=seed)  # <--- Required to initialize np_random
+    env = RewardShapingWrapper(env)
     env = ss.max_observation_v0(env, 2)
     # env = ss.frame_skip_v0(env, 4)
     # env = ss.clip_reward_v0(env, lower_bound=-1, upper_bound=1)
@@ -190,7 +281,8 @@ def reshape_obs_shape(obs):
     return ma_obs
 
 def evaluate(model, device, seed, num_eval_eps=10, record=False):
-    eval_env = knights_archers_zombies_v10.env(render_mode="rgb_array", vector_state=False, black_death=True)
+    eval_env = cooperative_pong_v5.env(render_mode="rgb_array")
+    env = RewardShapingWrapper(env)
     env = ss.max_observation_v0(eval_env, 2)
     # env = ss.clip_reward_v0(env, lower_bound=-1, upper_bound=1)
     env = ss.color_reduction_v0(env, mode="B")
@@ -234,7 +326,7 @@ def evaluate(model, device, seed, num_eval_eps=10, record=False):
                 obs_tensor = obs_tensor.unsqueeze(0)  # Add batch dimension
 
 
-                action, logprobs, _ = model.get_action(obs_tensor, deterministic=False)
+                action, logprobs, _ = model.get_action(obs_tensor, deterministic=True)
 
             eval_env.step(action.cpu().item())
             # print(logprobs.exp())
@@ -267,8 +359,6 @@ def evaluate(model, device, seed, num_eval_eps=10, record=False):
             cv2.destroyAllWindows()
 
     eval_env.close()
-    
-    # for net in actor_networks:
     model.train()
     
     avg_return1 = np.mean(all_episode_rewards['paddle_0'])
@@ -309,7 +399,7 @@ if __name__ == "__main__":
     random.seed(args.seed)
     np.random.seed(args.seed)
     torch.manual_seed(args.seed)
-    device = "cpu"
+    device = "cuda"
 
     # 3. Create multiple parallel games
     env = make_env(env_id=args.env_id, seed=args.seed, idx=0, run_name=run_name)
@@ -324,8 +414,25 @@ if __name__ == "__main__":
     # print("Vectorizing environments...")
     # envs = ss.concat_vec_envs_v1(env, args.num_envs, num_cpus=0, base_class="gymnasium")
     critic_network = Critic()
-    actor_network = Actor(single_action_space.n) 
-    optimizer = optim.Adam(list(critic_network.parameters()) + list(actor_network.parameters()), lr=args.lr, eps=1e-5) 
+    actor_network = Actor(single_action_space.n)
+    predictor_network = PredictorNet()
+    target_network = TargetNet()
+    for params in target_network.paramters():
+        params.requires_grad = False
+    
+    # target_network.load_state_dict(predictor_network.state_dict())
+    target_network.eval()
+
+    critic_network = critic_network.to(device)
+    actor_network = actor_network.to(device)
+    predictor_network = predictor_network.to(device)
+    target_network = target_network.to(device)
+    # Include predictor params, target frozen
+    optimizer = optim.Adam(
+        list(critic_network.parameters()) + list(actor_network.parameters()) + list(predictor_network.parameters()),
+        lr=args.lr,
+        eps=1e-5,
+    ) 
     
     # critic_optimizer = optim.Adam(critic_network.parameters(), lr=args.lr, eps=1e-5)
 
@@ -361,12 +468,15 @@ if __name__ == "__main__":
 
     critic_network = critic_network.to(device)
     global_state = torch.zeros((args.max_steps, num_games, ma_obs.shape[-1] * args.num_agents, ) + single_observation_space.shape).to(device)
-    obs_storage = torch.zeros((args.max_steps, num_games, args.num_agents, ) + single_observation_space.shape).to(device)
-    actions_storage = torch.zeros((args.max_steps, args.num_envs), dtype=torch.long).to(device)
-    logprobs_storage = torch.zeros((args.max_steps, args.num_envs)).to(device)
-    rewards_storage = torch.zeros((args.max_steps, args.num_envs)).to(device)
-    dones_storage = torch.zeros((args.max_steps, args.num_envs)).to(device)
-    values_storage = torch.zeros((args.max_steps, args.num_envs)).to(device)
+    obs_storage = torch.zeros((args.max_steps, num_games, args.num_agents) + single_observation_space.shape, device=device)
+    next_obs_storage = torch.zeros((args.max_steps, num_games, args.num_agents) + single_observation_space.shape, device=device)
+    actions_storage = torch.zeros((args.max_steps, args.num_envs), dtype=torch.long, device=device)
+    logprobs_storage = torch.zeros((args.max_steps, args.num_envs), device=device)
+    ext_rewards_storage = torch.zeros((args.max_steps, args.num_envs), device=device)
+    int_rewards_storage = torch.zeros((args.max_steps, args.num_envs), device=device)
+    dones_storage = torch.zeros((args.max_steps, args.num_envs), device=device)
+    ext_values_storage = torch.zeros((args.max_steps, args.num_envs), device=device)
+    int_values_storage = torch.zeros((args.max_steps, args.num_envs), device=device)
 
     # Episode tracking variables
     # episodic_return_reward = np.zeros((args.num_envs, args.num_agents))
@@ -428,7 +538,7 @@ if __name__ == "__main__":
             
             with torch.no_grad():
                     # print("No eval: ", global_state.shape)
-                    value = critic_network(global_state)
+                    value_ext, value_int = critic_network(global_state)
                                 
             for agent_idx in range(args.num_agents):
                 
@@ -438,19 +548,33 @@ if __name__ == "__main__":
                 actions_per_step = actions_per_step.long()
                 actions_per_step[masks[agent_idx]] = action.long()
               
-                values_storage[step][masks[agent_idx]] = value.flatten()
+                ext_values_storage[step][masks[agent_idx]] = value_ext.flatten()
+                int_values_storage[step][masks[agent_idx]] = value_int.flatten()
              
                 logprobs_storage[step][masks[agent_idx]] = logprob
             
             actions_storage[step] = actions_per_step
             # print(actions_per_step)
             next_obs, reward, terminated, truncated, info = envs.step(actions_per_step.cpu().numpy())
+            next_obs = torch.tensor(next_obs, device=device, dtype=torch.float32) / 255.0
+            next_ma_obs = torch.zeros((num_games, args.num_agents) + single_observation_space.shape).to(device)
             
             done = np.logical_or(terminated, truncated)
             
-            rewards_storage[step] = torch.tensor(reward).to(device).view(-1)
-            next_obs = torch.Tensor(next_obs).to(device)
-            next_obs /= 255.0
+            for agent_idx in range(args.num_agents):
+                agent_obs = next_obs[masks[agent_idx]]
+                next_ma_obs[:, agent_idx , ...] = agent_obs
+            
+            ext_rewards_storage[step] = torch.as_tensor(reward, device=device, dtype=torch.float32).view(-1)
+            # --- intrinsic reward ---
+            with torch.no_grad(): #Use next_obs not current_obs
+                pred_features = predictor_network(next_ma_obs.reshape(-1, *single_observation_space.shape))
+                targ_features = target_network(next_ma_obs.reshape(-1, *single_observation_space.shape))
+                int_r = (pred_features - targ_features).pow(2)
+                int_r = int_r.mean(1)
+                int_r = int_r.view(args.num_envs)  # align with env order
+            int_rewards_storage[step] = int_r
+            next_obs_storage[step] = next_ma_obs
             next_done = torch.Tensor(done).to(device)
             dones_storage[step] = next_done
 
@@ -464,7 +588,8 @@ if __name__ == "__main__":
                 mask = next_obs[:, 0, 0, (4 + agent_idx)] == 1.0
                 masks.append(mask)
 
-            advantages = torch.zeros(( num_games, args.max_steps, args.num_agents)).to(device)
+            ext_advantages = torch.zeros((num_games, args.max_steps, args.num_agents), device=device)
+            int_advantages = torch.zeros_like(ext_advantages)
             ma_obs = torch.zeros((num_games, args.num_agents) + single_observation_space.shape).to(device)
             
             for agent_idx in range(args.num_agents):
@@ -472,33 +597,53 @@ if __name__ == "__main__":
                 ma_obs[:, agent_idx , ...] = agent_obs
             
             global_state = ma_obs.permute(0, 1, 4, 2, 3).reshape(num_games, -1, 84, 84)
-            bootstrap_value = critic_network(global_state).squeeze()  
+            ext_bootstrap, int_bootstrap = critic_network(global_state)
+            ext_bootstrap = ext_bootstrap.squeeze()
+            int_bootstrap = int_bootstrap.squeeze()  
             # print(values_storage.shape, next_done.shape)
        
             done_storage_gae = dones_storage.reshape((args.max_steps, num_games, args.num_agents)) 
-            values_storage_gae = values_storage.reshape((args.max_steps, num_games, args.num_agents))
-            rewards_storage_gae = rewards_storage.reshape(args.max_steps, num_games, args.num_agents)
+            ext_values_gae = ext_values_storage.reshape((args.max_steps, num_games, args.num_agents))
+            int_values_gae = int_values_storage.reshape((args.max_steps, num_games, args.num_agents))
+            ext_rewards_gae = ext_rewards_storage.reshape(args.max_steps, num_games, args.num_agents)
+            int_rewards_gae = int_rewards_storage.reshape(args.max_steps, num_games, args.num_agents)
             
             for agent_idx in range(args.num_agents):
                
             # === Advantage Calculation & Returns 
-                lastgae = 0
+                lastgae_ext = 0
+                lastgae_int = 0
                 #This is not right because we n INDEPENDENT PARALLEL ENVS and thus we need to calculate the adv value for each agent separately per game basis
                 for t in reversed(range(args.max_steps)):
                     if t == args.max_steps - 1:
+                        ext_gt_next_state = ext_bootstrap  # same value for all agents
+                        int_gt_next_state = int_bootstrap
                         nextnonterminal = (1.0 - next_done.reshape(num_games, args.num_agents)[:, agent_idx]) #its shared env so we can just take the first agent cus cooperative game
                         # print("Next nonterminal: ", nextnonterminal)
-                        gt_next_state = bootstrap_value * nextnonterminal
+                        
                     else:
                         nextnonterminal = (1.0 - done_storage_gae[t + 1, :, agent_idx])
-                        gt_next_state = values_storage_gae[t + 1, :, agent_idx] * nextnonterminal # If done at t, the next gt is 0
+                        ext_gt_next_state = ext_values_gae[t + 1, :, agent_idx] * nextnonterminal
+                        int_gt_next_state = int_values_gae[t + 1, :, agent_idx] * nextnonterminal
 
-                    delta = (rewards_storage_gae[t, :, agent_idx] +  args.gamma *  gt_next_state ) - values_storage_gae[t, :, agent_idx]
-                    advantages[:, t, agent_idx] = lastgae = delta + args.GAE * lastgae * nextnonterminal * args.gamma
+                    # Extrinsic
+                    delta_ext = (ext_rewards_gae[t, :, agent_idx] + args.ext_gamma * ext_gt_next_state) - ext_values_gae[t, :, agent_idx]
+                    ext_advantages[:, t, agent_idx] = lastgae_ext = delta_ext + args.GAE * lastgae_ext * nextnonterminal * args.ext_gamma
+                    # Intrinsic
+                    delta_int = (int_rewards_gae[t, :, agent_idx] + args.int_gamma * int_gt_next_state) - int_values_gae[t, :, agent_idx]
+                    int_advantages[:, t, agent_idx] = lastgae_int = delta_int + args.GAE * lastgae_int * nextnonterminal * args.int_gamma
 
         # print(values_storage_gae.shape, advantages.shape, rewards_storage_gae.shape)
-        advantages = advantages.permute(1, 0, 2)  # (max_steps, num_games, num_agents)
-        returns = advantages + values_storage_gae
+        ext_advantages = ext_advantages.permute(1, 0, 2)
+        int_advantages = int_advantages.permute(1, 0, 2)
+        combined_advantages = args.EXT_COEFF * ext_advantages + args.INT_COEFF * int_advantages
+
+        ext_returns = ext_advantages + ext_values_gae
+        int_returns = int_advantages + int_values_gae
+        # Combined for logging/legacy code
+        combined_values_gae = args.EXT_COEFF * ext_values_gae + args.INT_COEFF * int_values_gae
+        returns = combined_advantages + combined_values_gae
+        combined_values_storage = args.EXT_COEFF * ext_values_storage + args.INT_COEFF * int_values_storage
         # advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
 
         # print("\n" + "="*50)
@@ -515,10 +660,14 @@ if __name__ == "__main__":
         b_obs = obs_storage.reshape((-1, args.num_agents, ) +  single_observation_space.shape)
         b_logprobs = logprobs_storage.reshape(-1, args.num_agents)
         b_actions = actions_storage.reshape((-1, args.num_agents) + single_action_space.shape)
-        b_advantages = advantages.reshape(-1, args.num_agents)
+        b_advantages = combined_advantages.reshape(-1, args.num_agents)
+        b_ext_returns = ext_returns.reshape(-1, args.num_agents)
+        b_int_returns = int_returns.reshape(-1, args.num_agents)
+        b_ext_values = ext_values_storage.reshape(-1, args.num_agents)
+        b_int_values = int_values_storage.reshape(-1, args.num_agents)
         b_returns = returns.reshape(-1, args.num_agents)
-        b_values = values_storage.reshape(-1, args.num_agents)
-
+        b_values = combined_values_storage.reshape(-1, args.num_agents)
+        b_obs_next = next_obs_storage.reshape((-1, args.num_agents, ) + single_observation_space.shape)
         # print("\n" + "="*50)
         # print("DEBUG: Shapes of flattened 'b_' tensors")
         # print(f"{'b_obs:':} {str(b_obs.shape)}")
@@ -552,16 +701,35 @@ if __name__ == "__main__":
                 global_state = b_obs[mb_inds].permute(0, 1, 4, 2, 3).reshape(mb_inds.shape[0], -1, 84, 84)
                 
                 # print("mb_obs shape: ", mb_obs.shape)
-                mb_returns = b_returns[mb_inds, 0]
-                mb_values = b_values[mb_inds, 0]
-                current_values = critic_network(global_state).squeeze()
+                mb_ext_returns = b_ext_returns[mb_inds, 0]
+                mb_int_returns = b_int_returns[mb_inds, 0]
+                mb_ext_values = b_ext_values[mb_inds, 0]
+                mb_int_values = b_int_values[mb_inds, 0]
+                current_ext, current_int = critic_network(global_state)
+                current_ext = current_ext.squeeze()
+                current_int = current_int.squeeze()
                 # print("Current values: ", current_values)
                 # print("mb_returns: ", mb_returns.shape, "mb_values: ", mb_values.shape, "current_values: ", current_values.shape)
-                v_loss_unclipped = (current_values - mb_returns) ** 2
-                v_clipped = mb_values + torch.clamp(current_values - mb_values, -args.clip_coeff, args.clip_coeff)
-                v_loss_clipped = (v_clipped - mb_returns) ** 2
-                v_loss_max = torch.max(v_loss_unclipped, v_loss_clipped)
-                critic_loss = args.VALUE_COEFF * 0.5 * v_loss_max.mean()
+                # --- Extrinsic value loss with clipping ---
+                v_ext_unclipped = (current_ext - mb_ext_returns) ** 2
+                v_ext_clipped_target = mb_ext_values + torch.clamp(
+                    current_ext - mb_ext_values,
+                    -args.clip_coeff,
+                    args.clip_coeff,
+                )
+                v_ext_clipped = (v_ext_clipped_target - mb_ext_returns) ** 2
+                v_loss_ext = torch.max(v_ext_unclipped, v_ext_clipped)
+                # --- Intrinsic value loss with clipping ---
+                v_int_unclipped = (current_int - mb_int_returns) ** 2
+                v_int_clipped_target = mb_int_values + torch.clamp(
+                    current_int - mb_int_values,
+                    -args.clip_coeff,
+                    args.clip_coeff,
+                )
+                v_int_clipped = (v_int_clipped_target - mb_int_returns) ** 2
+                v_loss_int = torch.max(v_int_unclipped, v_int_clipped)
+
+                critic_loss = args.VALUE_COEFF * 0.5 * (v_loss_ext.mean() + v_loss_int.mean())
                 # print("V loss unclipped: ", v_loss_unclipped, "V loss clipped: ", v_loss_clipped)
                 policy_loss_total = 0.0
                 entropy_loss = 0.0
@@ -584,6 +752,8 @@ if __name__ == "__main__":
                     # print(new_log_probs, '    ', mb_logprobs)
                     # Policy loss
                     wandb.log({
+                        "policy/old_logprobs": mb_logprobs.mean().item(),
+                        "policy/new_logprobs": new_log_probs.mean().item(),
                         "policy/ratio": ratio.mean().item(),
                         
                     })
@@ -604,7 +774,13 @@ if __name__ == "__main__":
                 entropy_loss /= args.num_agents
 
                 # Total loss
-                loss = policy_loss_total - args.ENTROPY_COEFF * entropy_loss + critic_loss
+                # RND predictor loss (use agent-0 observations for simplicity)
+                mb_obs_all_agents = b_obs_next[mb_inds].reshape(-1, *single_observation_space.shape)
+                pred_feat = predictor_network(mb_obs_all_agents)
+                targ_feat = target_network(mb_obs_all_agents)
+                intrinsic_loss = (pred_feat - targ_feat.detach()).pow(2).mean(1).mean()
+
+                loss = policy_loss_total - args.ENTROPY_COEFF * entropy_loss + critic_loss + intrinsic_loss
 
                 optimizer.zero_grad()
                 # critic_optimizer.zero_grad()
@@ -646,10 +822,13 @@ if __name__ == "__main__":
                     f"losses/value_loss_agent{agent_idx}": critic_loss.item(),
                     f"losses/entropy_agent{agent_idx}": entropy_loss,
                     f"charts/learning_rate_agent{agent_idx}": optimizer.param_groups[0]['lr'],
-                    f"charts/avg_rewards_agent{agent_idx}": np.mean(rewards_storage[:, agent_idx].cpu().numpy()),
+                    f"charts/avg_ext_rewards_agent{agent_idx}": ext_rewards_storage.mean().item(),
+                    f"charts/avg_int_rewards_agent{agent_idx}": int_rewards_storage.mean().item(),
+                    f"charts/avg_ext_value_agent{agent_idx}": ext_values_storage.mean().item(),
+                    f"charts/avg_int_value_agent{agent_idx}": int_values_storage.mean().item(),
                     f"charts/advantages_mean_agent{agent_idx}": b_advantages.mean().item(),
                     f"charts/advantages_std_agent{agent_idx}": b_advantages.std().item(),
-                    f"charts/returns_mean_agent{agent_idx}": b_returns.mean().item(),
+                    # f"charts/returns_mean_agent{agent_idx}": b_returns.mean().item(),
                     "global_step": global_step,
                 })
                 # print(f"Update {update}, Global Step: {global_step}, Policy Loss: {policy_loss.item():.4f}, Value Loss: {critic_loss.item():.4f}")
