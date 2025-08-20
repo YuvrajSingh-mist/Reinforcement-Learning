@@ -1,0 +1,59 @@
+_wandb:
+    value:
+        cli_version: 0.19.8
+        m: []
+        python_version: 3.11.11
+        t:
+            "1":
+                - 1
+                - 55
+                - 105
+            "2":
+                - 1
+                - 55
+                - 105
+            "3":
+                - 13
+                - 16
+                - 23
+                - 55
+            "4": 3.11.11
+            "5": 0.19.8
+            "8":
+                - 5
+            "12": 0.19.8
+            "13": linux-x86_64
+batch_size:
+    value: 512
+clip_range:
+    value: 0.2
+ent_coef:
+    value: 0.01
+env:
+    value: HalfCheetah-v5
+gae_lambda:
+    value: 0.95
+gamma:
+    value: 0.99
+learning_rate:
+    value: 0.0003
+max_grad_norm:
+    value: 0.5
+n_envs:
+    value: 16
+n_epochs:
+    value: 10
+n_steps:
+    value: 1024
+policy_kwargs:
+    value:
+        activation_fn: torch.nn.modules.activation.Tanh
+        net_arch:
+            - 64
+            - 64
+seed:
+    value: 42
+total_timesteps:
+    value: 10000000
+vf_coef:
+    value: 0.5

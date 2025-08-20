@@ -1,0 +1,8 @@
+{"time":"2025-07-12T18:54:08.047167845Z","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/PPO/MuJoCo/benchmark/SB3/wandb/run-20250712_185407-l8kubh07/logs/debug-core.log"}
+{"time":"2025-07-12T18:54:08.349226364Z","level":"INFO","msg":"created new stream","id":"l8kubh07"}
+{"time":"2025-07-12T18:54:08.349364401Z","level":"INFO","msg":"stream: started","id":"l8kubh07"}
+{"time":"2025-07-12T18:54:08.349390566Z","level":"INFO","msg":"writer: Do: started","stream_id":"l8kubh07"}
+{"time":"2025-07-12T18:54:08.34940136Z","level":"INFO","msg":"handler: started","stream_id":"l8kubh07"}
+{"time":"2025-07-12T18:54:08.349433881Z","level":"INFO","msg":"sender: started","stream_id":"l8kubh07"}
+{"time":"2025-07-12T18:54:08.934751514Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-12T18:54:08.963035558Z","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}

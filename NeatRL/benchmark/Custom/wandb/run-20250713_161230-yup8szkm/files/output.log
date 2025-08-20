@@ -1,0 +1,4 @@
+Training Updates: 100%|████████████████████████████████████████████████████████████████████████████████████████| 30/30 [02:54<00:00,  5.82s/it]
+Update 10, Global Step: 163824, Policy Loss: -0.0188, Value Loss: 0.0753
+Update 20, Global Step: 327664, Policy Loss: -0.0292, Value Loss: 0.0365
+Update 30, Global Step: 491504, Policy Loss: -0.0000, Value Loss: 0.0288

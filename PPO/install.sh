@@ -1,0 +1,15 @@
+pip install gymnasium
+pip install tqdm
+pip install tensorboard
+pip install wandb
+pip install opencv-python
+pip install imageio
+pip install stable-baselines3
+pip install wandb
+pip install gymnasium[mujoco]
+pip install flappy_bird_gymnasium
+pip install imageio[ffmpeg]
+pip install imageio[pyav]
+pip install swig
+pip install gymnasium[box2D]
+pip install ale_py

@@ -72,7 +72,7 @@ class ActorNet(nn.Module):
         self.fc1 = layer_init(nn.Linear(state_space, 512))
         self.fc2 = layer_init(nn.Linear(512, 512))
         self.fc3 = layer_init(nn.Linear(512, 256))
-        self.out = layer_init(nn.Linear(256, action_space))
+        self.out = layer_init(nn.Linear(256, action_space), std=0.01)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
@@ -96,8 +96,8 @@ class CriticNet(nn.Module):
         self.fc1 = layer_init(nn.Linear(state_space, 512))
         self.fc2 = layer_init(nn.Linear(512, 512))
         self.fc3 = layer_init(nn.Linear(512, 256))
-        self.value_ext = layer_init(nn.Linear(256, 1))
-        self.value_int = layer_init(nn.Linear(256, 1))
+        self.value_ext = layer_init(nn.Linear(256, 1),std=1.)
+        self.value_int = layer_init(nn.Linear(256, 1), std=1.0)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
@@ -241,10 +241,11 @@ if __name__ == "__main__":
             with torch.no_grad():
                 pred_features = predictor_network(next_obs)
                 target_features = target_network(next_obs)
-                intrinsic_reward = torch.pow(pred_features - target_features, 2).sum()
+                intrinsic_reward = torch.pow(pred_features - target_features, 2).sum(1)
 
             intrinsic_rewards_storage[step] = intrinsic_reward
-            
+            print(f"Step {step}",  {intrinsic_reward.mean().item()})
+
             # Step the environment
             new_obs, reward, terminated, truncated, info = envs.step(action.cpu().numpy())
             done = np.logical_or(terminated, truncated)

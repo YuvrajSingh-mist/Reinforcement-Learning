@@ -1,0 +1,57 @@
+Training Updates: 0it [00:00, ?it/s]
+Capturing final evaluation video...
+Evaluating:   0%|                                                                                                       | 0/30 [00:00<?, ?it/s]Exception ignored in: <function GLContext.__del__ at 0x7fbb67448cc0>
+Traceback (most recent call last):
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/mujoco/glfw/__init__.py", line 41, in __del__
+    self.free()
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/mujoco/glfw/__init__.py", line 34, in free
+    if self._context:
+       ^^^^^^^^^^^^^
+AttributeError: 'GLContext' object has no attribute '_context'
+Evaluating:   0%|                                                                                                       | 0/30 [00:03<?, ?it/s]
+Traceback (most recent call last):
+  File "/mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/NeatRL/benchmark/Custom/half-cheetah-v2.py", line 398, in <module>
+    episodic_returns, eval_frames = evaluate(envs, actor_network, device, args.gamma, record=True, num_eval_eps=30, render_mode='rgb_array')
+                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/NeatRL/benchmark/Custom/half-cheetah-v2.py", line 176, in evaluate
+    frame = eval_env.render()
+            ^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/core.py", line 337, in render
+    return self.env.render()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/core.py", line 337, in render
+    return self.env.render()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/core.py", line 337, in render
+    return self.env.render()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/wrappers/common.py", line 409, in render
+    return super().render()
+           ^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/core.py", line 337, in render
+    return self.env.render()
+           ^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/wrappers/common.py", line 301, in render
+    return env_render_passive_checker(self.env)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/utils/passive_env_checker.py", line 361, in env_render_passive_checker
+    result = env.render()
+             ^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/envs/mujoco/mujoco_env.py", line 159, in render
+    return self.mujoco_renderer.render(self.render_mode)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 731, in render
+    viewer = self._get_viewer(render_mode=render_mode)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 755, in _get_viewer
+    self.viewer = OffScreenViewer(
+                  ^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 157, in __init__
+    super().__init__(model, data, width, height, max_geom, visual_options)
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/gymnasium/envs/mujoco/mujoco_rendering.py", line 69, in __init__
+    self.con = mujoco.MjrContext(self.model, mujoco.mjtFontScale.mjFONTSCALE_150)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/numpy/lib/_version.py", line 54, in __init__
+    def __init__(self, vstring):
+
+KeyboardInterrupt

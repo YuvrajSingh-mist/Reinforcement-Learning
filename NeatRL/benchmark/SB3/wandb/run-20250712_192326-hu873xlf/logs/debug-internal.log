@@ -1,0 +1,16 @@
+{"time":"2025-07-12T19:23:26.844940431Z","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/PPO/MuJoCo/benchmark/SB3/wandb/run-20250712_192326-hu873xlf/logs/debug-core.log"}
+{"time":"2025-07-12T19:23:27.223390983Z","level":"INFO","msg":"created new stream","id":"hu873xlf"}
+{"time":"2025-07-12T19:23:27.223581335Z","level":"INFO","msg":"stream: started","id":"hu873xlf"}
+{"time":"2025-07-12T19:23:27.223900466Z","level":"INFO","msg":"sender: started","stream_id":"hu873xlf"}
+{"time":"2025-07-12T19:23:27.223775759Z","level":"INFO","msg":"writer: Do: started","stream_id":"hu873xlf"}
+{"time":"2025-07-12T19:23:27.224452737Z","level":"INFO","msg":"handler: started","stream_id":"hu873xlf"}
+{"time":"2025-07-12T19:23:27.856536843Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-12T19:23:27.899720165Z","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2025-07-12T19:23:50.047161617Z","level":"INFO","msg":"stream: closing","id":"hu873xlf"}
+{"time":"2025-07-12T19:23:50.047486588Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-12T19:23:50.048824561Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-12T19:23:51.460671882Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-12T19:23:52.98703391Z","level":"INFO","msg":"handler: closed","stream_id":"hu873xlf"}
+{"time":"2025-07-12T19:23:52.98706912Z","level":"INFO","msg":"writer: Close: closed","stream_id":"hu873xlf"}
+{"time":"2025-07-12T19:23:52.987116673Z","level":"INFO","msg":"sender: closed","stream_id":"hu873xlf"}
+{"time":"2025-07-12T19:23:52.991207677Z","level":"INFO","msg":"stream: closed","id":"hu873xlf"}

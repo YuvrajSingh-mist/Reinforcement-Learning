@@ -1,0 +1,6 @@
+{"time":"2025-07-13T16:12:24.763611251Z","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/NeatRL/benchmark/Custom/wandb/run-20250713_161224-hufzs2it/logs/debug-core.log"}
+{"time":"2025-07-13T16:12:26.778166792Z","level":"INFO","msg":"created new stream","id":"hufzs2it"}
+{"time":"2025-07-13T16:12:26.77840015Z","level":"INFO","msg":"stream: started","id":"hufzs2it"}
+{"time":"2025-07-13T16:12:26.778431348Z","level":"INFO","msg":"writer: Do: started","stream_id":"hufzs2it"}
+{"time":"2025-07-13T16:12:26.778455563Z","level":"INFO","msg":"handler: started","stream_id":"hufzs2it"}
+{"time":"2025-07-13T16:12:26.778481158Z","level":"INFO","msg":"sender: started","stream_id":"hufzs2it"}

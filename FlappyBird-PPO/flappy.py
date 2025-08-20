@@ -44,6 +44,37 @@ class Config:
     
 VALUE_COEFF = 0.5
 
+
+class Predictor(nn.Module):
+    def __init__(self, state_space, action_space):
+        super(Predictor, self).__init__()
+        print(f"State space: {state_space}, Action space: {action_space}")
+        self.fc1 = nn.Linear(state_space, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 256)
+        self.out = nn.Linear(256, 1)
+
+    def forward(self, x):
+        x = torch.nn.functional.relu(self.fc1(x))
+        x = torch.nn.functional.relu(self.fc2(x))
+        x = torch.nn.functional.relu(self.fc3(x))
+        return self.out(x)
+
+class Target(nn.Module):
+    def __init__(self, state_space, action_space):
+        super(Target, self).__init__()
+        print(f"State space: {state_space}, Action space: {action_space}")
+        self.fc1 = nn.Linear(state_space, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.fc3 = nn.Linear(512, 256)
+        self.out = nn.Linear(256, 1)
+
+    def forward(self, x):
+        x = torch.nn.functional.relu(self.fc1(x))
+        x = torch.nn.functional.relu(self.fc2(x))
+        x = torch.nn.functional.relu(self.fc3(x))
+        return self.out(x)
+    
 class ActorNet(nn.Module):
     def __init__(self, state_space, action_space):
         super(ActorNet, self).__init__()
@@ -72,7 +103,7 @@ class ActorNet(nn.Module):
         # Apply softmax with numerical stability
         x = torch.nn.functional.softmax(x, dim=-1)  # Apply softmax to get probabilities
         
-        return x
+        return x    
     
     def get_action(self, x):
         action_probs = self.forward(x)

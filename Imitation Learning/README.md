@@ -31,7 +31,7 @@ The learned policies can then be evaluated in the environment.
 
 ## 🖼️ GridWorld Visualization
 
-![GridWorld Environment](images/image.png)
+<!-- ![GridWorld Environment](images/image.png) -->
 
 *The GridWorld environment where the agent learns to navigate and imitate expert behavior.*
 

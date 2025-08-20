@@ -1,0 +1,17 @@
+{"time":"2025-07-13T16:12:30.9277814Z","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/NeatRL/benchmark/Custom/wandb/run-20250713_161230-yup8szkm/logs/debug-core.log"}
+{"time":"2025-07-13T16:12:31.08852209Z","level":"INFO","msg":"created new stream","id":"yup8szkm"}
+{"time":"2025-07-13T16:12:31.08869051Z","level":"INFO","msg":"stream: started","id":"yup8szkm"}
+{"time":"2025-07-13T16:12:31.088810937Z","level":"INFO","msg":"sender: started","stream_id":"yup8szkm"}
+{"time":"2025-07-13T16:12:31.088714829Z","level":"INFO","msg":"writer: Do: started","stream_id":"yup8szkm"}
+{"time":"2025-07-13T16:12:31.088746323Z","level":"INFO","msg":"handler: started","stream_id":"yup8szkm"}
+{"time":"2025-07-13T16:12:31.695582516Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-07-13T16:12:31.713698893Z","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
+{"time":"2025-07-13T16:15:27.702144655Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-07-13T16:15:27.702949855Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-07-13T16:15:28.734924588Z","level":"INFO","msg":"handler: operation stats","stats":{"operations":[{"desc":"uploading output.log","runtime_seconds":0.248619968,"progress":"539B/539B"},{"desc":"uploading wandb-summary.json","runtime_seconds":0.248285616,"progress":"1.5KB/1.5KB"}],"total_operations":2}}
+{"time":"2025-07-13T16:15:29.334195357Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-07-13T16:15:29.528347029Z","level":"INFO","msg":"stream: closing","id":"yup8szkm"}
+{"time":"2025-07-13T16:15:29.535820675Z","level":"INFO","msg":"handler: closed","stream_id":"yup8szkm"}
+{"time":"2025-07-13T16:15:29.53589902Z","level":"INFO","msg":"writer: Close: closed","stream_id":"yup8szkm"}
+{"time":"2025-07-13T16:15:29.535947712Z","level":"INFO","msg":"sender: closed","stream_id":"yup8szkm"}
+{"time":"2025-07-13T16:15:29.53736003Z","level":"INFO","msg":"stream: closed","id":"yup8szkm"}

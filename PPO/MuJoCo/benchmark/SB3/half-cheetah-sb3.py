@@ -138,11 +138,11 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # --- W&B Initialization ---
-    group_name = f"NeatRL-Benchmark-SB3-PPO-{args.env}"
+    # group_name = f"NeatRL-Benchmark-SB3-PPO-{args.env}"
     run = wandb.init(
         project="NeatRL", # MATCHING project name
-        group=group_name,
-        name=f"PPO-SB3-seed-{args.seed}",
+        # group=group_name,
+        name=f"NeatRL-Benchmark-PPO-SB3-seed-{args.seed}",
         config=vars(args),
         sync_tensorboard=True,
         monitor_gym=True,

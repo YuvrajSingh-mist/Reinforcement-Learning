@@ -171,7 +171,7 @@ class PredictorNet(nn.Module):
         
         self.network = FeatureExtractor((4, 84, 84))
         
-        self.out = layer_init(nn.Linear(512, 256))
+        self.out = nn.Linear(512, 256)
 
     def forward(self, x):
         x = self.network(x / 255.0)
@@ -190,6 +190,14 @@ class TargetNet(nn.Module):
         x = self.network(x / 255.0)
         return self.out(x)
 
+
+
+
+
+# IMPORTANT NOTE
+
+# 1) next_obs is used since YOU ARE WANTING TO EXPLORE NEW STATES RIGHT?
+# 2) .sum(1) causes gradient explosion use .mean(1) 
      
      
 def make_env(env_id, seed, idx, render_mode=None):
@@ -305,11 +313,7 @@ if __name__ == "__main__":
 
             next_obs_cpu = next_obs.cpu().numpy()
             
-            # --- RND Intrinsic Reward Calculation ---
-            with torch.no_grad():
-                pred_features = predictor_network(next_obs)
-                target_features = target_network(next_obs)
-                intrinsic_reward = torch.pow(pred_features - target_features, 2).sum(1)
+          
 
             intrinsic_rewards_storage[step] = intrinsic_reward
             # print(f"Step {step}",  {intrinsic_reward.mean().item()})
@@ -318,9 +322,18 @@ if __name__ == "__main__":
             new_obs, reward, terminated, truncated, info = envs.step(action.cpu().numpy())
             done = np.logical_or(terminated, truncated)
             
+           
+
             rewards_storage[step] = torch.tensor(reward).to(device).view(-1)
             next_obs = torch.Tensor(new_obs).to(device)
             next_done = torch.Tensor(done).to(device)
+
+               # --- RND Intrinsic Reward Calculation ---
+            with torch.no_grad():
+                pred_features = predictor_network(next_obs)
+                target_features = target_network(next_obs)
+                intrinsic_reward = torch.pow(pred_features - target_features, 2).sum(1)
+
             wandb.log({
                 "train/step": global_step,
                 "train/intrinsic_reward": intrinsic_reward.mean().item(),

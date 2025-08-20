@@ -163,8 +163,9 @@ def evaluate(model, device, run_name, num_eval_eps = 10, record = False):
             obs, reward, terminated, truncated, _ = eval_env.step(action_numpy)
             done = terminated or truncated
             episode_reward += reward
-
-          
+            
+            
+            
         returns.append(episode_reward)
         # if eps == 0:  # Save frames only for the first episode (optional)
         #     frames = episode_frames.copy()  # Avoid memory issues

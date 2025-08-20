@@ -57,24 +57,31 @@ class ActorNet(nn.Module):
     def __init__(self, state_space, action_space):
         super(ActorNet, self).__init__()
         print(f"State space: {state_space}, Action space: {action_space}")
-        self.fc1 = nn.Linear(state_space, 256)
-        self.fc2 = nn.Linear(256, 256)
-        self.fc3 = nn.Linear(256, 16)
-        self.out = nn.Linear(16, action_space)
+         
+        self.conv1 = nn.Conv2d(4, 32, kernel_size=8, stride=4)
+        self.conv2 = nn.Conv2d(32, 32, kernel_size=4, stride=2)
+        self.conv3 = nn.Conv2d(32, 64, kernel_size=3, stride=3)
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(64 * 2 * 2, 512)
+        self.fc2 = nn.Linear(512, 512)
+        self.q_value = nn.Linear(512, action_space)
 
     def forward(self, x):
-        x =  torch.tanh(self.out(self.fc3(torch.nn.functional.mish(self.fc2(torch.nn.functional.mish(self.fc1(x)))))))
-      
-        # x = torch.nn.functional.softmax(x, dim=1)  # Apply softmax to get probabilities
-        
+        x = torch.nn.functional.relu(self.conv1(x))
+        x = torch.nn.functional.relu(self.conv2(x))
+        x = torch.nn.functional.relu(self.conv3(x))
+        x = self.flatten(x)
+        x = torch.nn.functional.relu(self.fc1(x))
+        x = torch.nn.functional.relu(self.fc2(x))
+        x = self.q_value(x)
 
-        return x * 2.0
+        return torch.nn.functional.softmax(x, dim=-1)  # Use softmax for action probabilities
     
-    # def get_action(self, x):
-    #     action_probs = self.forward(x)
-    #     dist = torch.distributions.Categorical(action_probs)  
-    #     action = dist.sample() 
-    #     return action, dist.log_prob(action) 
+    def get_action(self, x):
+        action_probs = self.forward(x)
+        dist = torch.distributions.Categorical(action_probs)  
+        action = dist.sample() 
+        return action, dist.log_prob(action) 
     
     
 class QNet(nn.Module):

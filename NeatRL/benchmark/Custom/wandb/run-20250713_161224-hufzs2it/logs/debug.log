@@ -1,0 +1,38 @@
+2025-07-13 16:12:24,631 INFO    MainThread:324810 [wandb_setup.py:_flush():67] Current SDK version is 0.19.8
+2025-07-13 16:12:24,631 INFO    MainThread:324810 [wandb_setup.py:_flush():67] Configure stats pid to 324810
+2025-07-13 16:12:24,631 INFO    MainThread:324810 [wandb_setup.py:_flush():67] Loading settings from /home/yuvrajsingh/.config/wandb/settings
+2025-07-13 16:12:24,632 INFO    MainThread:324810 [wandb_setup.py:_flush():67] Loading settings from /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/NeatRL/benchmark/Custom/wandb/settings
+2025-07-13 16:12:24,632 INFO    MainThread:324810 [wandb_setup.py:_flush():67] Loading settings from environment variables
+2025-07-13 16:12:24,632 INFO    MainThread:324810 [wandb_init.py:setup_run_log_directory():647] Logging user logs to /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/NeatRL/benchmark/Custom/wandb/run-20250713_161224-hufzs2it/logs/debug.log
+2025-07-13 16:12:24,632 INFO    MainThread:324810 [wandb_init.py:setup_run_log_directory():648] Logging internal logs to /mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/NeatRL/benchmark/Custom/wandb/run-20250713_161224-hufzs2it/logs/debug-internal.log
+2025-07-13 16:12:24,752 INFO    MainThread:324810 [wandb_init.py:init():761] calling init triggers
+2025-07-13 16:12:24,752 INFO    MainThread:324810 [wandb_init.py:init():766] wandb.init called with sweep_config: {}
+config: {'env_id': 'HalfCheetah-v5', 'seed': 42, 'total_timesteps': 1000, 'n_envs': 16, 'run': 1, '_wandb': {'code_path': 'code/NeatRL/benchmark/Custom/half-cheetah-v2.py'}}
+2025-07-13 16:12:24,752 INFO    MainThread:324810 [wandb_init.py:init():784] starting backend
+2025-07-13 16:12:24,752 INFO    MainThread:324810 [wandb_init.py:init():788] sending inform_init request
+2025-07-13 16:12:24,758 INFO    MainThread:324810 [backend.py:_multiprocessing_setup():101] multiprocessing start_methods=fork,spawn,forkserver, using: spawn
+2025-07-13 16:12:24,758 INFO    MainThread:324810 [wandb_init.py:init():798] backend started and connected
+2025-07-13 16:12:24,759 INFO    MainThread:324810 [wandb_init.py:init():891] updated telemetry
+2025-07-13 16:12:24,828 INFO    MainThread:324810 [wandb_init.py:init():915] communicating run to backend with 90.0 second timeout
+2025-07-13 16:12:26,949 WARNING MainThread:324810 [wandb_init.py:init():1472] interrupted
+Traceback (most recent call last):
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/wandb/sdk/wandb_init.py", line 1468, in init
+    return wi.init(run_settings, run_config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/wandb/sdk/wandb_init.py", line 941, in init
+    result = wait_with_progress(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/wandb/sdk/mailbox/wait_with_progress.py", line 24, in wait_with_progress
+    return wait_all_with_progress(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/wandb/sdk/mailbox/wait_with_progress.py", line 87, in wait_all_with_progress
+    return asyncio_compat.run(progress_loop_with_timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/site-packages/wandb/sdk/lib/asyncio_compat.py", line 30, in run
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/concurrent/futures/_base.py", line 451, in result
+    self._condition.wait(timeout)
+  File "/home/yuvrajsingh/anaconda3/envs/mt/lib/python3.11/threading.py", line 327, in wait
+    waiter.acquire()
+KeyboardInterrupt
