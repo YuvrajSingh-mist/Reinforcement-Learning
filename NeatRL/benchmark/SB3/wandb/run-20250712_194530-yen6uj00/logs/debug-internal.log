@@ -1,9 +1,0 @@
-{"time":"2025-07-12T19:45:30.947173613Z","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/PPO/MuJoCo/benchmark/SB3/wandb/run-20250712_194530-yen6uj00/logs/debug-core.log"}
-{"time":"2025-07-12T19:45:31.214781608Z","level":"INFO","msg":"created new stream","id":"yen6uj00"}
-{"time":"2025-07-12T19:45:31.214939655Z","level":"INFO","msg":"stream: started","id":"yen6uj00"}
-{"time":"2025-07-12T19:45:31.214974912Z","level":"INFO","msg":"writer: Do: started","stream_id":"yen6uj00"}
-{"time":"2025-07-12T19:45:31.215062623Z","level":"INFO","msg":"sender: started","stream_id":"yen6uj00"}
-{"time":"2025-07-12T19:45:31.215053391Z","level":"INFO","msg":"handler: started","stream_id":"yen6uj00"}
-{"time":"2025-07-12T19:45:31.736728722Z","level":"INFO","msg":"Starting system monitor"}
-{"time":"2025-07-12T19:45:31.773418955Z","level":"ERROR","msg":"git repo not found","error":"repository does not exist"}
-{"time":"2025-07-12T19:45:46.17113093Z","level":"INFO","msg":"tensorboard: no root directory after 10 seconds, using working directory"}

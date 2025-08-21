@@ -1,6 +1,0 @@
-{"time":"2025-07-12T18:55:47.211220472Z","level":"INFO","msg":"stream: starting","core version":"0.19.8","symlink path":"/mnt/c/Users/yuvra/OneDrive/Desktop/Work/pytorch/RL/PPO/MuJoCo/benchmark/SB3/wandb/run-20250712_185547-iwxt1fsi/logs/debug-core.log"}
-{"time":"2025-07-12T18:55:47.616331408Z","level":"INFO","msg":"created new stream","id":"iwxt1fsi"}
-{"time":"2025-07-12T18:55:47.616479694Z","level":"INFO","msg":"stream: started","id":"iwxt1fsi"}
-{"time":"2025-07-12T18:55:47.616516249Z","level":"INFO","msg":"writer: Do: started","stream_id":"iwxt1fsi"}
-{"time":"2025-07-12T18:55:47.616549201Z","level":"INFO","msg":"sender: started","stream_id":"iwxt1fsi"}
-{"time":"2025-07-12T18:55:47.616567992Z","level":"INFO","msg":"handler: started","stream_id":"iwxt1fsi"}
