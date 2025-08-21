@@ -164,6 +164,21 @@ Ideas for extensions and improvements:
 - [PyTorch Documentation](https://pytorch.org/docs/stable/index.html)
 - [Stable Baselines3](https://stable-baselines3.readthedocs.io/)
 
+## Citation
+
+If you use this repository in your research, please cite it as:
+
+```bibtex
+@misc{singh2025deep-rl-projects,
+  author       = {YuvrajSingh-mist},
+  title        = {Deep Reinforcement Learning Projects},
+  year         = {2025},
+  howpublished = {GitHub repository},
+  url          = {https://github.com/YuvrajSingh-mist/Reinforcement-Learning},
+  note         = {commit 477ff21}
+}
+```
+
 ## License
 
 MIT License
